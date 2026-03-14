@@ -15,7 +15,7 @@ description: |
 
 # asc skills
 
-Browse, install, and manage Claude Code agent skills from the `tddworks/asc-cli` repository. Skills extend your agent with specialized knowledge about App Store Connect workflows — screenshots, TestFlight, code signing, subscriptions, and more.
+Browse, install, and manage Claude Code agent skills from the `tddworks/asc-cli-skills` repository. Skills extend your agent with specialized knowledge about App Store Connect workflows — screenshots, TestFlight, code signing, subscriptions, and more.
 
 ## Commands
 
@@ -25,7 +25,7 @@ Browse, install, and manage Claude Code agent skills from the `tddworks/asc-cli`
 asc skills list
 ```
 
-Lists all skills available for installation from `tddworks/asc-cli`. Delegates to `npx skills add tddworks/asc-cli --list`.
+Lists all skills available for installation from `tddworks/asc-cli-skills`. Delegates to `npx skills add tddworks/asc-cli-skills --list`.
 
 ### install — install skills into your agent
 
@@ -35,7 +35,7 @@ asc skills install --all                 # install all available skills
 asc skills install                       # same as --all (default)
 ```
 
-Delegates to `npx --yes skills add tddworks/asc-cli`. Skills are installed to `~/.claude/skills/`.
+Delegates to `npx --yes skills add tddworks/asc-cli-skills`. Skills are installed to `~/.claude/skills/`.
 
 | Flag | Purpose |
 |------|---------|
@@ -168,5 +168,5 @@ export ASC_NO_UPDATE_CHECK=1   # any value, presence-based
 ## See Also
 
 - Full feature doc: `docs/features/skills.md`
-- Skills source repository: `tddworks/asc-cli` (root `skills/` directory)
+- Skills source repository: `tddworks/asc-cli-skills`
 - CAEOAS: follow `affordances.listSkills` from any `asc skills installed` response
