@@ -6,13 +6,23 @@ Each skill teaches your agent how to use a specific `asc` command group, includi
 
 ## Install
 
+### Via npx (recommended)
+
 ```bash
-asc skills install --all
+# Install all skills
+npx --yes skills add tddworks/asc-cli-skills
+
+# Install a single skill
+npx --yes skills add tddworks/asc-cli-skills --name asc-testflight
+
+# List available skills
+npx --yes skills add tddworks/asc-cli-skills --list
 ```
 
-Or install a single skill:
+### Via asc CLI
 
 ```bash
+asc skills install --all
 asc skills install --name asc-testflight
 ```
 
@@ -66,8 +76,13 @@ The `shared/` directory contains cross-skill resources like project context reso
 ## Update
 
 ```bash
-asc skills check       # check for updates
-asc skills update      # pull latest versions
+# Via npx
+npx --yes skills check
+npx --yes skills update
+
+# Via asc CLI
+asc skills check
+asc skills update
 ```
 
 ## License
