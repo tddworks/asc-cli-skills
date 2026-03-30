@@ -1,11 +1,110 @@
 # GitHub Actions Workflow Templates
 
-## Minimal: Upload + Submit
+## Option A: Archive from Source + Submit
 
-The simplest App Store release pipeline. Drop this into `.github/workflows/appstore-release.yml`.
+Full `asc`-only pipeline — archive, export, upload, and submit without external build tools. Drop this into `.github/workflows/appstore-release.yml`.
 
 ```yaml
-name: App Store Release
+name: App Store Release (from source)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version string (e.g. 1.2.0)'
+        required: true
+      scheme:
+        description: 'Xcode scheme name'
+        required: true
+      platform:
+        description: 'Platform (ios, macos, tvos, visionos)'
+        required: false
+        default: 'ios'
+
+env:
+  APP_ID: ${{ vars.APP_ID }}   # set as a repo variable, not a secret
+
+jobs:
+  release:
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install asc CLI
+        run: brew tap tddworks/tap && brew install asccli
+
+      - name: Archive, Export, and Upload
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          BUILD_NUMBER=$(asc builds next-number \
+            --app-id "$APP_ID" \
+            --version "${{ inputs.version }}" \
+            --platform "${{ inputs.platform }}")
+
+          asc builds archive \
+            --scheme "${{ inputs.scheme }}" \
+            --platform "${{ inputs.platform }}" \
+            --upload \
+            --app-id "$APP_ID" \
+            --version "${{ inputs.version }}" \
+            --build-number "$BUILD_NUMBER"
+
+      - name: Get Build ID
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          BUILD_ID=$(asc builds list --app-id "$APP_ID" \
+            --version "${{ inputs.version }}" \
+            --platform "${{ inputs.platform }}" | jq -r '.data[0].id')
+          echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+
+      - name: Link Build to Version
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          VERSION_ID=$(asc versions list --app-id "$APP_ID" | jq -r '.data[0].id')
+          asc versions set-build --version-id "$VERSION_ID" --build-id "$BUILD_ID"
+          echo "VERSION_ID=$VERSION_ID" >> $GITHUB_ENV
+
+      - name: Check Submission Readiness
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          READINESS=$(asc versions check-readiness --version-id "$VERSION_ID")
+          IS_READY=$(echo "$READINESS" | jq -r '.data[0].isReadyToSubmit')
+          if [ "$IS_READY" != "true" ]; then
+            echo "Version is NOT ready to submit:"
+            echo "$READINESS" | jq '.data[0] | {stateCheck, buildCheck, pricingCheck}'
+            exit 1
+          fi
+
+      - name: Submit for App Store Review
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          asc versions submit --version-id "$VERSION_ID"
+```
+
+---
+
+## Option B: Upload Pre-built IPA + Submit
+
+Use this when your build step is separate (Xcode, Fastlane, etc.) and produces a signed IPA/PKG.
+
+```yaml
+name: App Store Release (upload IPA)
 
 on:
   workflow_dispatch:
@@ -62,7 +161,9 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
-          BUILD_ID=$(asc builds list --app-id "$APP_ID" | jq -r '.data[0].id')
+          BUILD_ID=$(asc builds list --app-id "$APP_ID" \
+            --version "${{ inputs.version }}" \
+            --platform "${{ inputs.platform }}" | jq -r '.data[0].id')
           echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
 
       - name: Link Build to Version
@@ -102,7 +203,7 @@ jobs:
 
 ## Full: TestFlight First, Then App Store
 
-Upload → beta test → then promote to App Store review.
+Archive from source → beta test → then promote to App Store review.
 
 ```yaml
 name: App Store Release (with TestFlight)
@@ -112,6 +213,9 @@ on:
     inputs:
       version:
         description: 'Version string (e.g. 1.2.0)'
+        required: true
+      scheme:
+        description: 'Xcode scheme name'
         required: true
       platform:
         description: 'Platform (ios, macos, tvos, visionos)'
@@ -137,14 +241,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Your build step here — produces MyApp.ipa
-      - name: Build signed IPA
-        run: echo "Your build step here"
-
       - name: Install asc CLI
         run: brew tap tddworks/tap && brew install asccli
 
-      - name: Upload to App Store Connect
+      - name: Archive, Export, and Upload
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
@@ -155,12 +255,13 @@ jobs:
             --version "${{ inputs.version }}" \
             --platform "${{ inputs.platform }}")
 
-          asc builds upload \
+          asc builds archive \
+            --scheme "${{ inputs.scheme }}" \
+            --platform "${{ inputs.platform }}" \
+            --upload \
             --app-id "$APP_ID" \
-            --file MyApp.ipa \
             --version "${{ inputs.version }}" \
-            --build-number "$BUILD_NUMBER" \
-            --wait
+            --build-number "$BUILD_NUMBER"
 
       - name: Get Build ID
         env:
@@ -168,7 +269,9 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
-          BUILD_ID=$(asc builds list --app-id "$APP_ID" | jq -r '.data[0].id')
+          BUILD_ID=$(asc builds list --app-id "$APP_ID" \
+            --version "${{ inputs.version }}" \
+            --platform "${{ inputs.platform }}" | jq -r '.data[0].id')
           echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
 
       - name: Distribute to TestFlight

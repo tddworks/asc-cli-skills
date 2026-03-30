@@ -13,16 +13,30 @@ description: |
 
 # App Store Release with `asc` in GitHub Actions
 
-The developer's mental model:
+Two paths depending on your build setup:
 
+**Option A: Archive from source** — `asc` handles everything (archive + export + upload)
+```
+Xcode project
+  → asc builds next-number            # auto-resolve build number
+  → asc builds archive --upload        # archive, export, upload in one step
+  → asc builds add-beta-group          # optional: TestFlight distribution
+  → asc builds update-beta-notes       # optional: "What's New" text
+  → asc versions set-build             # link build to App Store version
+  → asc versions check-readiness       # gate: verify all checks pass
+  → asc versions submit                # submit for App Store review
+```
+
+**Option B: Upload pre-built IPA** — you already have a signed binary (from Xcode, Fastlane, etc.)
 ```
 Signed IPA/PKG (from your build step)
-  → asc builds upload --wait        # upload + wait for Apple processing
-  → asc builds add-beta-group       # optional: TestFlight distribution
-  → asc builds update-beta-notes    # optional: "What's New" text
-  → asc versions set-build          # link build to App Store version
-  → asc versions check-readiness    # gate: verify all checks pass
-  → asc versions submit             # submit for App Store review
+  → asc builds next-number            # auto-resolve build number
+  → asc builds upload --wait           # upload + wait for Apple processing
+  → asc builds add-beta-group          # optional: TestFlight distribution
+  → asc builds update-beta-notes       # optional: "What's New" text
+  → asc versions set-build             # link build to App Store version
+  → asc versions check-readiness       # gate: verify all checks pass
+  → asc versions submit                # submit for App Store review
 ```
 
 See [workflow-template.md](references/workflow-template.md) for complete copy-paste workflows.
@@ -91,8 +105,29 @@ cat AuthKey_XXXXXX.p8 | pbcopy   # paste as the secret value
 
 ## Core Commands
 
+### Option A: Archive from source (recommended for `asc`-only workflows)
+
 ```bash
-# 1. Get the next build number automatically
+# 1. Get the next build number
+BUILD_NUMBER=$(asc builds next-number --app-id $APP_ID --version $VERSION --platform ios)
+
+# 2. Archive, export, and upload in one command
+asc builds archive \
+  --scheme $SCHEME \
+  --platform ios \
+  --upload \
+  --app-id $APP_ID \
+  --version $VERSION \
+  --build-number $BUILD_NUMBER
+
+# 3. Get the processed build ID
+BUILD_ID=$(asc builds list --app-id $APP_ID --version $VERSION --platform ios | jq -r '.data[0].id')
+```
+
+### Option B: Upload pre-built IPA/PKG
+
+```bash
+# 1. Get the next build number
 BUILD_NUMBER=$(asc builds next-number --app-id $APP_ID --version $VERSION --platform ios)
 
 # 2. Upload IPA (auto-detects iOS from .ipa, macOS from .pkg)
@@ -101,11 +136,15 @@ asc builds upload \
   --file MyApp.ipa \
   --version $VERSION \
   --build-number $BUILD_NUMBER \
-  --wait                   # blocks until COMPLETE or FAILED
+  --wait
 
 # 3. Get the processed build ID
-BUILD_ID=$(asc builds list --app-id $APP_ID --pretty | jq -r '.data[0].id')
+BUILD_ID=$(asc builds list --app-id $APP_ID --version $VERSION --platform ios | jq -r '.data[0].id')
+```
 
+### Common steps (after either option)
+
+```bash
 # 4. TestFlight: add to beta group
 asc builds add-beta-group --build-id $BUILD_ID --beta-group-id $GROUP_ID
 
