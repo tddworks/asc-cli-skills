@@ -73,20 +73,23 @@ See [project-context.md](../shared/project-context.md) — check `.asc/project.j
 APP_ID=$(cat .asc/project.json 2>/dev/null | jq -r '.appId // empty')
 # If empty: ask user or run `asc apps list | jq -r '.data[0].id'`
 
-# 1. Upload and wait
-asc builds upload --app-id "$APP_ID" --file MyApp.ipa \
-  --version 1.2.0 --build-number 55 --wait
+# 1. Get the next build number automatically
+BUILD_NUMBER=$(asc builds next-number --app-id "$APP_ID" --version 1.2.0 --platform ios)
 
-# 2. Get the processed build ID
+# 2. Upload and wait
+asc builds upload --app-id "$APP_ID" --file MyApp.ipa \
+  --version 1.2.0 --build-number "$BUILD_NUMBER" --wait
+
+# 3. Get the processed build ID
 BUILD_ID=$(asc builds list --app-id $APP_ID | jq -r '.data[0].id')
 
-# 3. Distribute to beta group
+# 4. Distribute to beta group
 asc builds add-beta-group --build-id $BUILD_ID --beta-group-id $GROUP_ID
 
-# 4. Set notes
+# 5. Set notes
 asc builds update-beta-notes --build-id $BUILD_ID --locale en-US --notes "..."
 
-# 5. Link to version and submit
+# 6. Link to version and submit
 asc versions set-build --version-id $VERSION_ID --build-id $BUILD_ID
 asc versions submit --version-id $VERSION_ID
 ```

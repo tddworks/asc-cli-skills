@@ -36,12 +36,15 @@ Workspace/project are auto-detected from the current directory if not specified.
 ### Archive + export + upload (one command)
 
 ```bash
+# Get the next build number automatically
+BUILD_NUMBER=$(asc builds next-number --app-id <APP_ID> --version 1.0.0 --platform ios)
+
 asc builds archive \
   --scheme <SCHEME_NAME> \
   --upload \
   --app-id <APP_ID> \
   --version 1.0.0 \
-  --build-number 42
+  --build-number "$BUILD_NUMBER"
 ```
 
 The `--upload` flag chains the exported IPA/PKG directly into the existing `asc builds upload` flow.
@@ -56,20 +59,23 @@ See [project-context.md](../shared/project-context.md) — check `.asc/project.j
 APP_ID=$(cat .asc/project.json 2>/dev/null | jq -r '.appId // empty')
 # If empty: ask user or run `asc apps list | jq -r '.data[0].id'`
 
-# 1. Archive, export, and upload in one command
-asc builds archive --scheme MyApp --upload \
-  --app-id "$APP_ID" --version 1.2.0 --build-number 55
+# 1. Get the next build number
+BUILD_NUMBER=$(asc builds next-number --app-id "$APP_ID" --version 1.2.0 --platform ios)
 
-# 2. Get the processed build ID
+# 2. Archive, export, and upload in one command
+asc builds archive --scheme MyApp --upload \
+  --app-id "$APP_ID" --version 1.2.0 --build-number "$BUILD_NUMBER"
+
+# 3. Get the processed build ID
 BUILD_ID=$(asc builds list --app-id $APP_ID | jq -r '.data[0].id')
 
-# 3. Distribute to TestFlight beta group
+# 4. Distribute to TestFlight beta group
 asc builds add-beta-group --build-id $BUILD_ID --beta-group-id $GROUP_ID
 
-# 4. Set TestFlight notes
+# 5. Set TestFlight notes
 asc builds update-beta-notes --build-id $BUILD_ID --locale en-US --notes "New features"
 
-# 5. Link to version and submit for review
+# 6. Link to version and submit for review
 asc versions set-build --version-id $VERSION_ID --build-id $BUILD_ID
 asc versions submit --version-id $VERSION_ID
 ```

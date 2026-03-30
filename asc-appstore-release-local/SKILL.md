@@ -42,6 +42,9 @@ Run any commands listed in `pre_archive` (e.g., `tuist generate`).
 ### Step 4: Archive, export, upload
 
 ```bash
+# Get the next build number automatically
+BUILD_NUMBER=$(asc builds next-number --app-id <APP_ID> --version <VERSION> --platform <PLATFORM>)
+
 asc builds archive \
   --scheme <SCHEME> \
   --platform <PLATFORM> \
@@ -50,7 +53,7 @@ asc builds archive \
   --upload \
   --app-id <APP_ID> \
   --version <VERSION> \
-  --build-number <BUILD_NUMBER>
+  --build-number "$BUILD_NUMBER"
 ```
 
 ### Step 5: Wait for build processing

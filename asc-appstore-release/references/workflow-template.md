@@ -13,9 +13,10 @@ on:
       version:
         description: 'Version string (e.g. 1.2.0)'
         required: true
-      build_number:
-        description: 'Build number (e.g. 42)'
-        required: true
+      platform:
+        description: 'Platform (ios, macos, tvos, visionos)'
+        required: false
+        default: 'ios'
 
 env:
   APP_ID: ${{ vars.APP_ID }}   # set as a repo variable, not a secret
@@ -43,11 +44,16 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
+          BUILD_NUMBER=$(asc builds next-number \
+            --app-id "$APP_ID" \
+            --version "${{ inputs.version }}" \
+            --platform "${{ inputs.platform }}")
+
           asc builds upload \
             --app-id "$APP_ID" \
             --file MyApp.ipa \
             --version "${{ inputs.version }}" \
-            --build-number "${{ inputs.build_number }}" \
+            --build-number "$BUILD_NUMBER" \
             --wait
 
       - name: Get Build ID
@@ -107,9 +113,10 @@ on:
       version:
         description: 'Version string (e.g. 1.2.0)'
         required: true
-      build_number:
-        description: 'Build number'
-        required: true
+      platform:
+        description: 'Platform (ios, macos, tvos, visionos)'
+        required: false
+        default: 'ios'
       whats_new:
         description: '"What''s New" notes for TestFlight'
         required: false
@@ -143,11 +150,16 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
         run: |
+          BUILD_NUMBER=$(asc builds next-number \
+            --app-id "$APP_ID" \
+            --version "${{ inputs.version }}" \
+            --platform "${{ inputs.platform }}")
+
           asc builds upload \
             --app-id "$APP_ID" \
             --file MyApp.ipa \
             --version "${{ inputs.version }}" \
-            --build-number "${{ inputs.build_number }}" \
+            --build-number "$BUILD_NUMBER" \
             --wait
 
       - name: Get Build ID

@@ -92,7 +92,10 @@ cat AuthKey_XXXXXX.p8 | pbcopy   # paste as the secret value
 ## Core Commands
 
 ```bash
-# 1. Upload IPA (auto-detects iOS from .ipa, macOS from .pkg)
+# 1. Get the next build number automatically
+BUILD_NUMBER=$(asc builds next-number --app-id $APP_ID --version $VERSION --platform ios)
+
+# 2. Upload IPA (auto-detects iOS from .ipa, macOS from .pkg)
 asc builds upload \
   --app-id $APP_ID \
   --file MyApp.ipa \
@@ -100,23 +103,23 @@ asc builds upload \
   --build-number $BUILD_NUMBER \
   --wait                   # blocks until COMPLETE or FAILED
 
-# 2. Get the processed build ID
+# 3. Get the processed build ID
 BUILD_ID=$(asc builds list --app-id $APP_ID --pretty | jq -r '.data[0].id')
 
-# 3. TestFlight: add to beta group
+# 4. TestFlight: add to beta group
 asc builds add-beta-group --build-id $BUILD_ID --beta-group-id $GROUP_ID
 
-# 4. TestFlight: set "What's New" notes
+# 5. TestFlight: set "What's New" notes
 asc builds update-beta-notes \
   --build-id $BUILD_ID \
   --locale en-US \
   --notes "Bug fixes and improvements."
 
-# 5. App Store: link build to version
+# 6. App Store: link build to version
 VERSION_ID=$(asc versions list --app-id $APP_ID --pretty | jq -r '.data[0].id')
 asc versions set-build --version-id $VERSION_ID --build-id $BUILD_ID
 
-# 6. App Store: gate — verify all checks pass before submitting
+# 7. App Store: gate — verify all checks pass before submitting
 READINESS=$(asc versions check-readiness --version-id $VERSION_ID)
 IS_READY=$(echo "$READINESS" | jq -r '.data[0].isReadyToSubmit')
 if [ "$IS_READY" != "true" ]; then
@@ -125,7 +128,7 @@ if [ "$IS_READY" != "true" ]; then
   exit 1
 fi
 
-# 7. App Store: submit for review
+# 8. App Store: submit for review
 asc versions submit --version-id $VERSION_ID
 ```
 

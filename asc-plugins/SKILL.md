@@ -126,8 +126,9 @@ asc plugins install ~/slack-notify
 asc plugins run --name slack-notify --event build.uploaded \
   --app-id 123456789 --build-id test-build --pretty
 
-# 4. Upload — plugin fires automatically
-asc builds upload --app-id 123456789 --file MyApp.ipa --version 1.0.0 --build-number 42
+# 4. Get next build number and upload — plugin fires automatically
+BUILD_NUMBER=$(asc builds next-number --app-id 123456789 --version 1.0.0 --platform ios)
+asc builds upload --app-id 123456789 --file MyApp.ipa --version 1.0.0 --build-number $BUILD_NUMBER
 
 # 5. Manage
 asc plugins list
