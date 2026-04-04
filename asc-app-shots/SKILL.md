@@ -1,226 +1,288 @@
 ---
 name: asc-app-shots
 description: |
-  App Store screenshot generation skill with two workflows:
-  (A) AI-powered: fetches app metadata via `asc` CLI, analyzes screenshots with Claude vision,
-  writes a ScreenPlan JSON, then generates final marketing screenshots via Gemini (`asc app-shots generate`),
-  and optionally translates them (`asc app-shots translate`).
-  (B) HTML-based (deterministic): writes a CompositionPlan JSON with precise device placement,
-  text overlays, and backgrounds, then runs `asc app-shots html` to produce a self-contained HTML
-  page with real device mockup frames and client-side PNG export — no AI needed.
+  App Store screenshot design and generation skill with three workflows:
+  (A) Template-based: browse templates, apply to screenshots, then generate with Gemini AI.
+  (B) AI-powered: Claude analyzes screenshots, writes a ScreenshotDesign JSON, Gemini generates final images.
+  (C) HTML-based: deterministic CompositionPlan with device mockups, no AI needed.
   Use this skill when:
-  (1) User asks to "create App Store screenshots" or "generate screenshot plan"
-  (2) User asks to "make an HTML screenshot page" or "compose screenshots with mockups"
-  (3) User mentions "asc-app-shots", "app-shots html", "composition plan", or screenshot marketing
-  (4) User wants deterministic, reproducible screenshot layouts with device mockups
-  (5) User wants AI-generated screenshots via Gemini
+  (1) User asks to "create App Store screenshots", "design screenshots", or "generate screenshot plan"
+  (2) User mentions "templates", "app-shots", "screenshot marketing", "compose screenshots"
+  (3) User wants to browse/preview/apply screenshot templates
+  (4) User wants AI-generated or deterministic screenshot layouts
 ---
 
-# asc-app-shots: App Store Screenshot Generator
+# asc-app-shots: App Store Screenshot Designer
 
-Two workflows for creating App Store screenshots:
+Three workflows — pick the best fit:
 
-| | Workflow A: AI (Gemini) | Workflow B: HTML (Deterministic) |
-|---|---|---|
-| **Plan format** | `ScreenPlan` (app-shots-plan.json) | `CompositionPlan` (composition-plan.json) |
-| **Command** | `asc app-shots generate` | `asc app-shots html` |
-| **Output** | PNG files via Gemini | Self-contained HTML with export |
-| **Mockup** | AI-rendered device frame | Real PNG mockup frame (bundled) |
-| **Reproducible** | No (AI varies each run) | Yes (same plan = same output) |
-| **Requires API key** | Yes (Gemini) | No |
-| **Multi-device** | One per screen | Multiple per screen |
+| | A: Templates + AI | B: AI-only | C: HTML (no AI) |
+|---|---|---|---|
+| **Flow** | Browse templates → apply → generate | Skill writes plan → generate | Skill writes plan → html |
+| **Plan** | `ScreenshotDesign` | `ScreenshotDesign` | `CompositionPlan` |
+| **Output** | PNG via Gemini | PNG via Gemini | HTML with export |
+| **Templates** | Yes (23 built-in) | No | No |
+| **Preview** | `--preview` flag | No | Browser preview |
+| **Requires API key** | Yes (Gemini) | Yes (Gemini) | No |
 
 ---
 
-## Workflow B — HTML-based (Deterministic)
+## Workflow A — Template-based (Recommended)
 
-Use this when the user wants precise control, reproducibility, or no AI dependency.
+Best for: users who want a polished design fast. Browse templates, pick one, apply to screenshots, then generate.
 
-### Step 1 — Write a CompositionPlan
-
-See `references/composition-plan-schema.md` for the full schema.
-
-The CompositionPlan uses **normalized 0–1 coordinates** so the same plan works at any resolution.
-
-```json
-{
-  "appName": "MyApp",
-  "canvas": { "width": 1320, "height": 2868, "displayType": "APP_IPHONE_69" },
-  "defaults": {
-    "background": { "type": "gradient", "from": "#2A1B5E", "to": "#000000", "angle": 180 },
-    "textColor": "#FFFFFF",
-    "subtextColor": "#A8B8D0",
-    "accentColor": "#4A7CFF",
-    "font": "Inter"
-  },
-  "screens": [
-    {
-      "texts": [
-        { "content": "APP MANAGEMENT", "x": 0.065, "y": 0.028, "fontSize": 0.028, "fontWeight": 700, "color": "#B8A0FF" },
-        { "content": "All your apps,\none dashboard.", "x": 0.065, "y": 0.055, "fontSize": 0.075, "fontWeight": 800, "color": "#FFFFFF" }
-      ],
-      "devices": [
-        { "screenshotFile": "screenshot-1.png", "mockup": "iPhone 17 Pro Max", "x": 0.5, "y": 0.65, "scale": 0.88 }
-      ]
-    }
-  ]
-}
-```
-
-#### Design patterns (Helm / premium App Store style)
-
-Follow these patterns for professional-looking screenshots:
-
-**Single device screen:**
-- Small uppercase category label at top: `y: 0.028`, `fontSize: 0.028`, colored to match gradient
-- Bold 2-line heading below: `y: 0.055`, `fontSize: 0.075`, `fontWeight: 800`, white
-- Large phone: `scale: 0.88`, `y: 0.65` — fills space below text, overflows bottom
-- Each screen gets a unique gradient vibe (purple, blue, teal) fading to black
-
-**Two-device screen:**
-- Center-aligned text: `x: 0.5`, `textAlign: "center"`
-- Back phone: `x: 0.34`, `y: 0.58`, `scale: 0.50`
-- Front phone: `x: 0.66`, `y: 0.64`, `scale: 0.50`
-- Front phone rendered on top (listed second in `devices` array)
-
-**Color vibes (each screen different):**
-- Purple: `{ "from": "#2A1B5E", "to": "#000000" }` with label `#B8A0FF`
-- Blue: `{ "from": "#1B3A5E", "to": "#000000" }` with label `#7BC4FF`
-- Teal: `{ "from": "#1A4A3E", "to": "#000000" }` with label `#7BFFC4`
-
-### Step 2 — Run html command
+### Step 1 — Browse templates
 
 ```bash
-# Auto-discover screenshots from plan directory
-asc app-shots html --plan composition-plan.json --output-dir output
+# List all available templates
+asc app-shots templates list
 
-# Explicit screenshot paths
-asc app-shots html --plan composition-plan.json --output-dir output screenshot-1.png screenshot-2.png
+# Filter by screen orientation
+asc app-shots templates list --size portrait
 
-# Disable mockup frame (screenshots only, no device frame)
-asc app-shots html --plan composition-plan.json --output-dir output --mockup none
+# Include visual previews (saves HTML files you can open)
+asc app-shots templates list --preview
 ```
 
-The command auto-detects the plan format (CompositionPlan vs ScreenPlan).
-
-Output: a single `app-shots.html` file with:
-- All screenshots embedded as base64 data URIs
-- Real device mockup frame (bundled iPhone 17 Pro Max - Deep Blue by default)
-- Client-side PNG export via html-to-image CDN
-- "Export All" button to download each screen as a PNG
-
-### Device mockup system
-
-The bundled default is **iPhone 17 Pro Max - Deep Blue** (`mockups.json`). Users can:
-- Use the default: omit `--mockup`
-- Disable: `--mockup none`
-- Use custom PNG: `--mockup /path/to/frame.png --screen-inset-x 80 --screen-inset-y 70`
-- Add custom mockups: place `mockups.json` + PNG files in `~/.asc/mockups/`
-
-The `mockup` field in each device slot refers to a device name in `mockups.json`:
+Each template has affordances:
 ```json
 {
-  "iPhone 17 Pro Max - Deep Blue": {
-    "category": "iPhone",
-    "model": "iPhone 17 Pro Max",
-    "displayType": "APP_IPHONE_67",
-    "outputWidth": 1470, "outputHeight": 3000,
-    "screenInsetX": 75, "screenInsetY": 66,
-    "file": "iPhone 17 Pro Max - Deep Blue - Portrait.png",
-    "default": true
+  "affordances": {
+    "preview": "asc app-shots templates get --id top-hero --preview",
+    "apply": "asc app-shots templates apply --id top-hero --screenshot screen.png",
+    "detail": "asc app-shots templates get --id top-hero"
   }
 }
 ```
 
-### HTML command flags
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--plan` | `.asc/app-shots/app-shots-plan.json` | Path to plan JSON |
-| `--output-dir` | `.asc/app-shots/output` | Output directory |
-| `--output-width` | `1320` | Canvas width (overridden by plan's `canvas.width`) |
-| `--output-height` | `2868` | Canvas height (overridden by plan's `canvas.height`) |
-| `--device-type` | — | Named device type, overrides width/height |
-| `--mockup` | *(bundled default)* | Device name, file path, or `"none"` |
-| `--screen-inset-x` | — | Override screen inset X from mockups.json |
-| `--screen-inset-y` | — | Override screen inset Y from mockups.json |
-
----
-
-## Workflow A — AI-powered (Gemini)
-
-Three-step workflow:
-1. **This skill** — fetch metadata + analyze screenshots → write `app-shots-plan.json`
-2. **`asc app-shots generate`** — read plan + call Gemini image generation → output `screen-{n}.png`
-3. **`asc app-shots translate`** *(optional)* — translate generated screenshots into other locales
-
-### Step 1 — Detect CLI command
+### Step 2 — Preview a template
 
 ```bash
-which asc
+# Get self-contained HTML preview — open in browser
+asc app-shots templates get --id top-hero --preview > preview.html
+open preview.html
 ```
 
-- **If found** → use `asc` directly
-- **If not found** → use `swift run asc`
-
-### Step 2 — Gather inputs
-
-See [project-context.md](../shared/project-context.md) for the app ID resolution order.
-
-- **App ID** — read from `.asc/project.json` first; if not present, run `asc apps list`
-- **Version ID** — run `asc versions list --app-id <APP_ID>` and use the first result
-- **Locale** — default: `en-US`
-- **Screenshot files** — check `.asc/app-shots/` first; only ask user if no files found
-
-### Step 3 — Fetch App Store metadata
-
-See `references/commands.md` for the full command reference.
+### Step 3 — Apply template to screenshot
 
 ```bash
-APP_INFO_ID=$(asc app-infos list --app-id <APP_ID> | jq -r '.data[0].id')
-asc app-info-localizations list --app-info-id "$APP_INFO_ID" \
-  | jq '.data[] | select(.locale == "<LOCALE>") | {name, subtitle}'
+# Apply and preview the result
+asc app-shots templates apply \
+  --id top-hero \
+  --screenshot .asc/app-shots/screen1.png \
+  --headline "Ship Faster" \
+  --preview > composed.html
+open composed.html
 
-VERSION_ID=$(asc versions list --app-id <APP_ID> | jq -r '.data[0].id')
-asc version-localizations list --version-id "$VERSION_ID" \
-  | jq '.data[] | select(.locale == "<LOCALE>") | {description, keywords}'
+# Apply without preview — get design JSON
+asc app-shots templates apply \
+  --id top-hero \
+  --screenshot .asc/app-shots/screen1.png \
+  --headline "Ship Faster" \
+  --app-name "MyApp"
 ```
 
-Summarize `description` to 2-3 sentences (≤200 chars) for `appDescription`.
+The result is a `ScreenDesign` with affordances pointing to next steps:
+```json
+{
+  "affordances": {
+    "generate": "asc app-shots generate --design design.json",
+    "preview": "asc app-shots templates apply --id top-hero --screenshot ... --headline ...",
+    "changeTemplate": "asc app-shots templates list"
+  }
+}
+```
 
-### Step 4 — Analyze screenshots with vision
-
-Read each screenshot file. Extract:
-- **Colors**: primary, accent, text, subtext hex values
-- **Per-screen**: heading (2-5 words), subheading (6-12 words), layoutMode, visualDirection, imagePrompt
-- **Tone**: minimal / playful / professional / bold / elegant
-
-See `references/plan-schema.md` for the full ScreenPlan schema and imagePrompt formula.
-
-### Step 5 — Write plan and generate
-
-Write to `.asc/app-shots/app-shots-plan.json`, then immediately run:
+### Step 4 — Generate final images
 
 ```bash
 asc app-shots generate
 ```
 
-Gemini API key resolution: `--gemini-api-key` → `$GEMINI_API_KEY` → `~/.asc/app-shots-config.json`
-
-### Step 6 — Translate (optional)
+### Step 5 — Translate (optional)
 
 ```bash
 asc app-shots translate --to zh --to ja
 ```
 
-See `references/commands.md` for all translate flags.
+### Available templates
+
+Templates are provided by plugins. The Blitz Screenshots plugin provides 23 built-in templates:
+
+| Category | Templates |
+|----------|-----------|
+| **Bold** | Top Hero, Bold CTA, Tilted Hero, Midnight Bold |
+| **Minimal** | Minimal Light, Device Only |
+| **Elegant** | Dark Premium, Sage Editorial, Cream Serif, Ocean Calm, Blush Editorial |
+| **Professional** | Top & Bottom, Left Aligned, Bottom Text |
+| **Playful** | Warm Sunset, Sky Soft, Cartoon Peach, Cartoon Mint, Cartoon Lavender |
+| **Showcase** | Duo Devices, Triple Fan, Side by Side |
+| **Custom** | Custom Blank |
+
+Each template defines:
+- Background gradient/solid color
+- Text slot positions (heading, subheading, tagline) with font sizes and styles
+- Device slot positions (phone placement, scale, rotation)
+- Supported screen sizes (portrait, landscape, etc.)
 
 ---
 
-## Gemini API key management
+## Workflow B — AI-powered (Gemini)
+
+Best for: users who want Claude to design the plan automatically.
+
+### Step 1 — Gather inputs
+
+See [project-context.md](../shared/project-context.md) for app ID resolution.
+
+- **App ID** — from `.asc/project.json` or `asc apps list`
+- **Version ID** — from `asc versions list --app-id <APP_ID>`
+- **Screenshot files** — check `.asc/app-shots/` directory
+
+### Step 2 — Fetch metadata
 
 ```bash
-asc app-shots config --gemini-api-key AIzaSy...    # save key
-asc app-shots config                                # show current key (masked) + source
-asc app-shots config --remove                       # delete saved key
+APP_INFO_ID=$(asc app-infos list --app-id <APP_ID> | jq -r '.data[0].id')
+APP_NAME=$(asc app-info-localizations list --app-info-id "$APP_INFO_ID" \
+  | jq -r '.data[] | select(.locale == "en-US") | .name')
+
+VERSION_ID=$(asc versions list --app-id <APP_ID> | jq -r '.data[0].id')
+DESCRIPTION=$(asc version-localizations list --version-id "$VERSION_ID" \
+  | jq -r '.data[] | select(.locale == "en-US") | .description')
+```
+
+### Step 3 — Analyze screenshots with vision
+
+Read each screenshot. Extract:
+- **Colors**: primary, accent, text, subtext hex values
+- **Per-screen**: heading (2-5 words), subheading, layoutMode, imagePrompt
+- **Tone**: minimal / playful / professional / bold / elegant
+
+### Step 4 — Write plan and generate
+
+Write `ScreenshotDesign` JSON to `.asc/app-shots/app-shots-plan.json`:
+
+```json
+{
+  "appId": "6736834466",
+  "appName": "MyApp",
+  "tagline": "Ship Faster",
+  "appDescription": "A brief summary for AI context",
+  "tone": "bold",
+  "colors": { "primary": "#0A0F1E", "accent": "#4A90E2", "text": "#FFFFFF", "subtext": "#94B8D4" },
+  "screens": [
+    {
+      "index": 0,
+      "screenshotFile": "screen1.png",
+      "heading": "Ship Faster",
+      "subheading": "Your App Store, One Command Away",
+      "layoutMode": "center",
+      "visualDirection": "Dashboard showing app list",
+      "imagePrompt": "Create a marketing screenshot..."
+    }
+  ]
+}
+```
+
+Then generate:
+
+```bash
+asc app-shots generate
+```
+
+### Step 5 — Translate (optional)
+
+```bash
+asc app-shots translate --to zh --to ja
+```
+
+---
+
+## Workflow C — HTML-based (Deterministic)
+
+Best for: precise control, reproducibility, no AI dependency.
+
+### Step 1 — Write CompositionPlan
+
+See `references/composition-plan-schema.md` for the full schema. Uses **normalized 0–1 coordinates**.
+
+```json
+{
+  "appName": "MyApp",
+  "canvas": { "width": 1320, "height": 2868 },
+  "defaults": {
+    "background": { "type": "gradient", "from": "#2A1B5E", "to": "#000000", "angle": 180 },
+    "textColor": "#FFFFFF", "subtextColor": "#A8B8D0", "accentColor": "#4A7CFF", "font": "Inter"
+  },
+  "screens": [{
+    "texts": [
+      { "content": "APP MANAGEMENT", "x": 0.065, "y": 0.028, "fontSize": 0.028, "fontWeight": 700, "color": "#B8A0FF" },
+      { "content": "All your apps,\none dashboard.", "x": 0.065, "y": 0.055, "fontSize": 0.075, "fontWeight": 800, "color": "#FFFFFF" }
+    ],
+    "devices": [
+      { "screenshotFile": "screenshot-1.png", "mockup": "iPhone 17 Pro Max", "x": 0.5, "y": 0.65, "scale": 0.88 }
+    ]
+  }]
+}
+```
+
+### Step 2 — Generate HTML
+
+```bash
+asc app-shots html --plan composition-plan.json --output-dir output
+```
+
+---
+
+## Command Reference
+
+### Template commands
+
+```bash
+asc app-shots templates list [--size portrait] [--preview]
+asc app-shots templates get --id <ID> [--preview]
+asc app-shots templates apply --id <ID> --screenshot <FILE> --headline <TEXT> [--preview]
+```
+
+### Generation commands
+
+```bash
+asc app-shots generate [--plan <FILE>] [--style-reference <FILE>] [--device-type <TYPE>]
+asc app-shots translate --to <LOCALE> [--to <LOCALE>...] [--style-reference <FILE>]
+asc app-shots html [--plan <FILE>] [--mockup <NAME|PATH|none>]
+```
+
+### Config
+
+```bash
+asc app-shots config --gemini-api-key <KEY>   # save
+asc app-shots config                           # show
+asc app-shots config --remove                  # delete
+```
+
+---
+
+## Gemini API key
+
+Resolution order:
+1. `--gemini-api-key` flag
+2. `$GEMINI_API_KEY` environment variable
+3. `~/.asc/app-shots-config.json` (via `asc app-shots config`)
+
+---
+
+## Device sizes
+
+| Device Type | Width × Height | Required |
+|---|---|---|
+| `APP_IPHONE_69` | 1320 × 2868 | ✅ |
+| `APP_IPHONE_67` | 1290 × 2796 | ✅ |
+| `APP_IPHONE_65` | 1260 × 2736 | ✅ |
+| `APP_IPAD_PRO_129` | 2048 × 2732 | ✅ |
+
+Generate multiple sizes:
+```bash
+asc app-shots generate --device-type APP_IPHONE_69 --output-dir output/iphone-69
+asc app-shots generate --device-type APP_IPHONE_67 --output-dir output/iphone-67
+asc app-shots generate --device-type APP_IPAD_PRO_129 --output-dir output/ipad-13
 ```

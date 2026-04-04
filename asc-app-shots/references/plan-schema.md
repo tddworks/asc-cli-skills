@@ -1,6 +1,6 @@
-# ScreenPlan JSON Schema
+# ScreenshotDesign JSON Schema
 
-The `ScreenPlan` is the core data structure written by the `asc-app-shots` skill and consumed by `asc app-shots generate`.
+The `ScreenshotDesign` is the core data structure written by the `asc-app-shots` skill and consumed by `asc app-shots generate`.
 
 ## Full Schema
 
