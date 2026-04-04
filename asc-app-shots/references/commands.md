@@ -48,38 +48,40 @@ With `--preview`: returns self-contained HTML showing the template applied to th
 
 ## Generation commands
 
-### Generate screenshots (Gemini AI)
+### Enhance screenshots (Gemini AI)
 
 ```bash
-asc app-shots generate [FLAGS] [screenshots...]
+asc app-shots generate --file <FILE> [FLAGS]
 ```
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--plan` | `.asc/app-shots/app-shots-plan.json` | Path to ScreenshotDesign JSON |
+| `--file` | *(required)* | Screenshot file to enhance |
 | `--gemini-api-key` | — | Gemini API key (→ env var → config file) |
-| `--model` | `gemini-3.1-flash-image-preview` | Gemini model |
+| `--model` | `gemini-2.0-flash-exp` | Gemini model |
 | `--output-dir` | `.asc/app-shots/output` | Output directory |
-| `--output-width` | `1320` | Output width in pixels |
-| `--output-height` | `2868` | Output height in pixels |
-| `--device-type` | — | Named device type (overrides width/height) |
-| `--style-reference` | — | Reference image for visual style replication |
+| `--style-reference` | — | Reference image — Gemini replicates its visual style |
+| `--prompt` | *(auto-enhance)* | Custom enhancement instructions |
 
 ```bash
-# Zero-argument happy path
-asc app-shots generate
+# Auto-enhance — photorealistic device frame, breakout elements, pro quality
+asc app-shots generate --file composed.png
 
-# With style reference
-asc app-shots generate --style-reference ~/Downloads/competitor-shot.png
+# Style transfer — match another screenshot's visual style
+asc app-shots generate --file composed.png --style-reference inspiration.png
 
-# Named device type
-asc app-shots generate --device-type APP_IPHONE_69
+# Custom prompt — describe what to change
+asc app-shots generate --file composed.png --prompt "warmer colors, deeper shadows"
 
-# Multiple sizes
-asc app-shots generate --device-type APP_IPHONE_69 --output-dir output/iphone-69
-asc app-shots generate --device-type APP_IPHONE_67 --output-dir output/iphone-67
-asc app-shots generate --device-type APP_IPAD_PRO_129 --output-dir output/ipad-13
 ```
+
+**Default auto-enhance prompt** (when no `--prompt` given):
+- Photorealistic iPhone 15 Pro mockup with reflections and shadows
+- Breakout elements — UI panels popping out from device frame, scaled up, with drop shadows
+- 1-2 small supporting elements (badges, icons) that reinforce the message
+- Clean, bold background — no glows or noise
+- Crisp, readable text
+- Professional App Store agency quality
 
 ### Translate screenshots
 

@@ -93,11 +93,29 @@ The result is a `ScreenDesign` with affordances pointing to next steps:
 }
 ```
 
-### Step 4 — Generate final images
+### Step 4 — Enhance with AI
+
+Three modes:
 
 ```bash
-asc app-shots generate
+# Auto-enhance — photorealistic device frame, breakout elements, pro polish
+asc app-shots generate --file .asc/app-shots/output/screen-0.png
+
+# Style transfer — match another screenshot's visual style
+asc app-shots generate --file .asc/app-shots/output/screen-0.png \
+  --style-reference ~/Downloads/inspiration.png
+
+# Custom prompt — describe exactly what you want
+asc app-shots generate --file .asc/app-shots/output/screen-0.png \
+  --prompt "add warm glow, deepen shadows, make text pop"
 ```
+
+The default auto-enhance prompt:
+- Replaces flat device frames with photorealistic iPhone 15 Pro mockups
+- Optionally adds breakout elements — UI panels popping out from the device with drop shadows
+- Adds 1-2 subtle supporting elements (badges, icons) if they reinforce the message
+- Keeps background clean and bold — no glows or noise
+- Professional App Store agency quality
 
 ### Step 5 — Translate (optional)
 
@@ -247,8 +265,13 @@ asc app-shots templates apply --id <ID> --screenshot <FILE> --headline <TEXT> [-
 ### Generation commands
 
 ```bash
-asc app-shots generate [--plan <FILE>] [--style-reference <FILE>] [--device-type <TYPE>]
+# Enhance a screenshot with AI
+asc app-shots generate --file <FILE> [--style-reference <FILE>] [--prompt <TEXT>] [--device-type <TYPE>]
+
+# Translate screenshots
 asc app-shots translate --to <LOCALE> [--to <LOCALE>...] [--style-reference <FILE>]
+
+# Generate HTML preview (no AI)
 asc app-shots html [--plan <FILE>] [--mockup <NAME|PATH|none>]
 ```
 
