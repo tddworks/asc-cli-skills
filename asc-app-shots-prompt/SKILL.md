@@ -111,6 +111,7 @@ Present the prompt to the user, then output the ready-to-run command:
 asc app-shots generate \
   --file <screenshot-path> \
   --prompt '<the generated prompt>' \
+  --device-type APP_IPHONE_67 \
   --output-dir .asc/app-shots/output
 ```
 
@@ -120,8 +121,14 @@ Also suggest a style reference variation if the user has a reference screenshot:
 asc app-shots generate \
   --file <screenshot-path> \
   --style-reference <reference-path> \
+  --device-type APP_IPHONE_67 \
   --output-dir .asc/app-shots/output
 ```
+
+Use `--device-type` to resize output to exact App Store dimensions. Common types:
+- `APP_IPHONE_69` (1320×2868) — iPhone 6.9"
+- `APP_IPHONE_67` (1290×2796) — iPhone 6.7"
+- `APP_IPAD_PRO_129` (2048×2732) — iPad 13"
 
 ## Examples
 

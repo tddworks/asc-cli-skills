@@ -1,4 +1,45 @@
-# asc Commands for Screenshot Design, Generation, and Translation
+# asc app-shots Commands
+
+## Generate
+
+Enhance a single screenshot into a marketing image using Gemini AI.
+
+```bash
+asc app-shots generate --file <FILE> [FLAGS]
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--file` | *(required)* | Screenshot file to enhance |
+| `--device-type` | — | Named device type — resizes output to exact App Store dimensions |
+| `--gemini-api-key` | — | Gemini API key (→ env var → config file) |
+| `--model` | `gemini-3.1-flash-image-preview` | Gemini model |
+| `--output-dir` | `.asc/app-shots/output` | Output directory |
+| `--style-reference` | — | Reference image — Gemini replicates its visual style |
+| `--prompt` | *(auto-enhance)* | Custom enhancement instructions |
+
+```bash
+# Auto-enhance
+asc app-shots generate --file screen.png
+
+# With device type for exact dimensions
+asc app-shots generate --file screen.png --device-type APP_IPHONE_67
+
+# Style transfer
+asc app-shots generate --file screen.png --style-reference inspiration.png
+
+# Custom prompt
+asc app-shots generate --file screen.png --prompt "warmer colors, deeper shadows"
+```
+
+**Default auto-enhance prompt** (when no `--prompt` given):
+- Photorealistic iPhone 15 Pro mockup with reflections and shadows
+- Breakout elements — UI panels popping out from device frame with drop shadows
+- 1-2 small supporting elements (badges, icons) that reinforce the message
+- Clean, bold background — no glows or noise
+- Professional App Store agency quality
+
+---
 
 ## Template commands
 
@@ -34,7 +75,6 @@ asc app-shots templates apply \
 Without `--preview`: returns ScreenDesign JSON with affordances.
 With `--preview`: returns self-contained HTML showing the template applied to the real screenshot.
 
-**Flags:**
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--id` | *(required)* | Template ID (e.g. `top-hero`) |
@@ -43,70 +83,6 @@ With `--preview`: returns self-contained HTML showing the template applied to th
 | `--subtitle` | — | Subtitle text |
 | `--app-name` | `My App` | App name |
 | `--preview` | — | Output self-contained HTML preview |
-
----
-
-## Generation commands
-
-### Enhance screenshots (Gemini AI)
-
-```bash
-asc app-shots generate --file <FILE> [FLAGS]
-```
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--file` | *(required)* | Screenshot file to enhance |
-| `--gemini-api-key` | — | Gemini API key (→ env var → config file) |
-| `--model` | `gemini-2.0-flash-exp` | Gemini model |
-| `--output-dir` | `.asc/app-shots/output` | Output directory |
-| `--style-reference` | — | Reference image — Gemini replicates its visual style |
-| `--prompt` | *(auto-enhance)* | Custom enhancement instructions |
-
-```bash
-# Auto-enhance — photorealistic device frame, breakout elements, pro quality
-asc app-shots generate --file composed.png
-
-# Style transfer — match another screenshot's visual style
-asc app-shots generate --file composed.png --style-reference inspiration.png
-
-# Custom prompt — describe what to change
-asc app-shots generate --file composed.png --prompt "warmer colors, deeper shadows"
-
-```
-
-**Default auto-enhance prompt** (when no `--prompt` given):
-- Photorealistic iPhone 15 Pro mockup with reflections and shadows
-- Breakout elements — UI panels popping out from device frame, scaled up, with drop shadows
-- 1-2 small supporting elements (badges, icons) that reinforce the message
-- Clean, bold background — no glows or noise
-- Crisp, readable text
-- Professional App Store agency quality
-
-### Translate screenshots
-
-```bash
-asc app-shots translate --to <LOCALE> [--to <LOCALE>...] [FLAGS]
-```
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--plan` | `.asc/app-shots/app-shots-plan.json` | Source design JSON |
-| `--from` | `en` | Source locale |
-| `--to` | *(required, repeatable)* | Target locale(s) |
-| `--source-dir` | `.asc/app-shots/output` | Directory with existing screenshots |
-| `--style-reference` | — | Reference image for consistent style |
-
-```bash
-asc app-shots translate --to zh --to ja
-asc app-shots translate --to zh --to ja --style-reference ~/Downloads/inspiration.png
-```
-
-### Generate HTML page (no AI)
-
-```bash
-asc app-shots html [--plan <FILE>] [--mockup <NAME|PATH|none>]
-```
 
 ---
 
@@ -142,6 +118,8 @@ asc app-shots config --remove                      # delete saved key
 ---
 
 ## Device sizes
+
+Use `--device-type` on `generate` to resize output to exact App Store dimensions.
 
 | Device Type | Width × Height | Required |
 |---|---|---|
