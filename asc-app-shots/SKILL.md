@@ -1,211 +1,205 @@
 ---
 name: asc-app-shots
 description: |
-  App Store screenshot design and generation skill with two workflows:
-  (A) Template-based: browse templates, apply to screenshots, then enhance with Gemini AI.
-  (B) AI-powered: Claude analyzes screenshots and generates a targeted prompt for Gemini.
+  App Store screenshot design, theming, and generation skill with three workflows:
+  (A) Template-based: browse templates, apply to screenshots, optionally enhance with Gemini AI.
+  (B) Gallery mode: multi-screen coordinated sets from gallery templates.
+  (C) Themed: apply visual themes (AI-generated ThemeDesign) on top of templates.
   Use this skill when:
   (1) User asks to "create App Store screenshots", "design screenshots", or "enhance screenshot"
   (2) User mentions "templates", "app-shots", "screenshot marketing", "compose screenshots"
-  (3) User wants to browse/preview/apply screenshot templates
-  (4) User wants AI-generated marketing screenshots
+  (3) User wants to browse/preview/apply screenshot templates or gallery templates
+  (4) User wants to apply visual themes (cartoon, luxury, space, zen, neon, etc.) to screenshots
+  (5) User asks about "ThemeDesign", "theme design", "apply theme", or "gallery templates"
 ---
 
 # asc-app-shots: App Store Screenshot Designer
 
-Two workflows — pick the best fit:
+Three workflows:
 
-| | A: Templates + AI | B: AI-only |
-|---|---|---|
-| **Flow** | Browse templates → apply → generate | Analyze screenshot → generate with prompt |
-| **Output** | PNG via Gemini | PNG via Gemini |
-| **Templates** | Yes (23 built-in) | No |
-| **Preview** | `--preview` flag | No |
-| **Requires API key** | Yes (Gemini) | Yes (Gemini) |
+| | A: Templates | B: Gallery | C: Themed |
+|---|---|---|---|
+| **Flow** | Browse → apply → generate | Gallery template → all screens | Template → ThemeDesign → apply |
+| **Screens** | Single | Multi (hero + features) | Per-slide |
+| **AI** | Optional (Gemini enhance) | Optional | 1 AI call for design, rest deterministic |
 
 ---
 
-## Workflow A — Template-based (Recommended)
+## Workflow A — Single Template
 
-Best for: users who want a polished design fast. Browse templates, pick one, apply to screenshots, then generate.
+Browse templates, apply to a screenshot, optionally enhance with Gemini AI.
 
-### Step 1 — Browse templates
-
-```bash
-# List all available templates
-asc app-shots templates list
-
-# Filter by screen orientation
-asc app-shots templates list --size portrait
-
-# Include visual previews (saves HTML files you can open)
-asc app-shots templates list --preview
-```
-
-Each template has affordances:
-```json
-{
-  "affordances": {
-    "preview": "asc app-shots templates get --id top-hero --preview",
-    "apply": "asc app-shots templates apply --id top-hero --screenshot screen.png",
-    "detail": "asc app-shots templates get --id top-hero"
-  }
-}
-```
-
-### Step 2 — Preview a template
+### Step 1 — Browse and apply
 
 ```bash
-# Get self-contained HTML preview — open in browser
-asc app-shots templates get --id top-hero --preview > preview.html
-open preview.html
-```
+asc app-shots templates list --output table
+asc app-shots templates get --id top-hero --preview > preview.html && open preview.html
 
-### Step 3 — Apply template to screenshot
-
-```bash
-# Apply and preview the result
+# Apply to screenshot → HTML preview
 asc app-shots templates apply \
-  --id top-hero \
-  --screenshot .asc/app-shots/screen1.png \
-  --headline "Ship Faster" \
-  --preview > composed.html
-open composed.html
+  --id top-hero --screenshot screen.png --headline "Ship Faster" \
+  --preview html > composed.html && open composed.html
 
-# Apply without preview — get design JSON
+# Apply to screenshot → PNG export
 asc app-shots templates apply \
-  --id top-hero \
-  --screenshot .asc/app-shots/screen1.png \
-  --headline "Ship Faster" \
-  --app-name "MyApp"
+  --id top-hero --screenshot screen.png --headline "Ship Faster" \
+  --preview image --image-output marketing.png
 ```
 
-The result is a `ScreenDesign` with affordances pointing to next steps:
-```json
-{
-  "affordances": {
-    "generate": "asc app-shots generate --design design.json",
-    "preview": "asc app-shots templates apply --id top-hero --screenshot ... --headline ...",
-    "changeTemplate": "asc app-shots templates list"
-  }
-}
-```
-
-### Step 4 — Enhance with AI
-
-Three modes:
+### Step 2 — Enhance with Gemini AI (optional)
 
 ```bash
-# Auto-enhance — photorealistic device frame, breakout elements, pro polish
-asc app-shots generate --file .asc/app-shots/output/screen-0.png
-
-# With exact App Store dimensions
-asc app-shots generate --file .asc/app-shots/output/screen-0.png --device-type APP_IPHONE_67
-
-# Style transfer — match another screenshot's visual style
-asc app-shots generate --file .asc/app-shots/output/screen-0.png \
-  --style-reference ~/Downloads/inspiration.png
-
-# Custom prompt — describe exactly what you want
-asc app-shots generate --file .asc/app-shots/output/screen-0.png \
-  --prompt "add warm glow, deepen shadows, make text pop"
+asc app-shots generate --file marketing.png
+asc app-shots generate --file marketing.png --device-type APP_IPHONE_67
+asc app-shots generate --file marketing.png --style-reference inspiration.png
+asc app-shots generate --file marketing.png --prompt "warmer colors, deeper shadows"
 ```
-
-The default auto-enhance prompt:
-- Replaces flat device frames with photorealistic iPhone 15 Pro mockups
-- Optionally adds breakout elements — UI panels popping out from the device with drop shadows
-- Adds 1-2 subtle supporting elements (badges, icons) if they reinforce the message
-- Keeps background clean and bold — no glows or noise
-- Professional App Store agency quality
-
-### Available templates
-
-Templates are provided by plugins. The Blitz Screenshots plugin provides 23 built-in templates:
-
-| Category | Templates |
-|----------|-----------|
-| **Bold** | Top Hero, Bold CTA, Tilted Hero, Midnight Bold |
-| **Minimal** | Minimal Light, Device Only |
-| **Elegant** | Dark Premium, Sage Editorial, Cream Serif, Ocean Calm, Blush Editorial |
-| **Professional** | Top & Bottom, Left Aligned, Bottom Text |
-| **Playful** | Warm Sunset, Sky Soft, Cartoon Peach, Cartoon Mint, Cartoon Lavender |
-| **Showcase** | Duo Devices, Triple Fan, Side by Side |
-| **Custom** | Custom Blank |
-
-Each template defines:
-- Background gradient/solid color
-- Text slot positions (heading, subheading, tagline) with font sizes and styles
-- Device slot positions (phone placement, scale, rotation)
-- Supported screen sizes (portrait, landscape, etc.)
 
 ---
 
-## Workflow B — AI-powered (prompt-driven)
+## Workflow B — Gallery Templates
 
-Best for: users who want Claude to analyze their screenshot and generate a targeted prompt.
-
-### Step 1 — Use the asc-app-shots-prompt skill
-
-In Claude Code, ask:
-> "Analyze this screenshot and generate a prompt for app-shots"
-
-Claude reads the screenshot, identifies:
-- App type, purpose, target audience
-- Dominant color scheme, UI components
-- Best breakout candidate (most compelling UI panel)
-- Marketing headline and subtitle
-
-Then outputs a ready-to-run command with a targeted `--prompt`.
-
-### Step 2 — Generate
+Coordinated multi-screen sets (hero + feature screens).
 
 ```bash
-asc app-shots generate \
-  --file screen.png \
-  --prompt '<generated prompt>' \
-  --device-type APP_IPHONE_67
+# Browse gallery templates
+asc app-shots gallery-templates list --output table
+
+# Preview all screens in horizontal strip
+asc app-shots gallery-templates get --id neon-pop --preview > gallery.html && open gallery.html
+
+# Get gallery details (JSON with shots, template, palette)
+asc app-shots gallery-templates get --id neon-pop --pretty
 ```
+
+Gallery templates include sample content (headlines, badges, trust marks) ready to customize.
+
+---
+
+## Workflow C — Themed Screenshots
+
+Apply visual themes on top of templates. Two-step flow: generate ThemeDesign once (1 AI call), then apply deterministically to any number of screenshots.
+
+### Step 1 — Browse themes
+
+```bash
+asc app-shots themes list --output table
+# → Cartoon, Joyful, Holiday, Zen, Neon, Nature, Retro, Space, Luxury
+
+asc app-shots themes get --id luxury --pretty
+asc app-shots themes get --id luxury --context   # AI prompt string
+```
+
+### Step 2 — Generate ThemeDesign (1 AI call, reusable)
+
+```bash
+asc app-shots themes design --id luxury > design.json
+```
+
+Returns JSON with `palette` (background + textColor) and `decorations` (floating elements with animations).
+
+### Step 3 — Apply ThemeDesign (deterministic, no AI)
+
+```bash
+# HTML preview
+asc app-shots themes apply-design \
+  --design design.json --template top-hero \
+  --screenshot screen.png --headline "Ship Faster" \
+  --preview html > themed.html
+
+# PNG export
+asc app-shots themes apply-design \
+  --design design.json --template top-hero \
+  --screenshot screen.png --headline "Ship Faster" \
+  --preview image --image-output themed.png
+```
+
+### Alternative: Full AI restyle (fallback)
+
+```bash
+asc app-shots themes apply \
+  --theme luxury --template top-hero \
+  --screenshot screen.png --headline "Ship Faster"
+```
+
+Per-slide AI restyle — slower but more creative. Falls back to this when `design` isn't available.
 
 ---
 
 ## Command Reference
 
-### Generate
+See [references/commands.md](references/commands.md) for full flag tables.
 
+### Templates
+```bash
+asc app-shots templates list [--size portrait] [--preview] [--output table]
+asc app-shots templates get --id <ID> [--preview]
+asc app-shots templates apply --id <ID> --screenshot <FILE> --headline <TEXT> [--preview html|image]
+```
+
+### Gallery Templates
+```bash
+asc app-shots gallery-templates list [--output table]
+asc app-shots gallery-templates get --id <ID> [--preview]
+```
+
+### Themes
+```bash
+asc app-shots themes list [--output table]
+asc app-shots themes get --id <ID> [--context]
+asc app-shots themes design --id <ID>
+asc app-shots themes apply-design --design <FILE> --template <ID> --screenshot <FILE> --headline <TEXT>
+asc app-shots themes apply --theme <ID> --template <ID> --screenshot <FILE> --headline <TEXT>
+```
+
+### Generate (Gemini AI)
 ```bash
 asc app-shots generate --file <FILE> [--device-type <TYPE>] [--style-reference <FILE>] [--prompt <TEXT>]
 ```
 
-### Templates
-
+### Export & Config
 ```bash
-asc app-shots templates list [--size portrait] [--preview]
-asc app-shots templates get --id <ID> [--preview]
-asc app-shots templates apply --id <ID> --screenshot <FILE> --headline <TEXT> [--preview]
-```
-
-### Config
-
-```bash
-asc app-shots config --gemini-api-key <KEY>   # save
-asc app-shots config                           # show
-asc app-shots config --remove                  # delete
+asc app-shots export --html <FILE> --output <PNG>
+asc app-shots config --gemini-api-key <KEY>
 ```
 
 ---
 
-## Gemini API key
+## Available Templates
+
+| Category | Templates |
+|----------|-----------|
+| **Bold** | Top Hero, Bold CTA, Tilted Hero |
+| **Minimal** | Minimal Light, Device Only |
+| **Elegant** | Dark Premium, Sage Editorial, Cream Serif, Ocean Calm, Blush Editorial |
+| **Professional** | Top & Bottom, Left Aligned, Bottom Text |
+| **Playful** | Warm Sunset, Sky Soft, Cartoon Peach, Cartoon Mint, Cartoon Lavender |
+| **Showcase** | Duo Devices (2), Triple Fan (3), Side by Side (2) |
+
+## Available Themes
+
+| Theme | Style |
+|-------|-------|
+| Cartoon | Bold outlines, bright solid colors, playful shapes |
+| Joyful | Confetti, sparkles, warm gradients |
+| Holiday | Festive decorations, snowflakes |
+| Zen | Calm, minimal, drifting leaves |
+| Neon | Dark backdrop, glowing neon accents |
+| Nature | Organic shapes, petals, watercolor |
+| Retro | Vintage palette, geometric, 80s/90s |
+| Space | Cosmic backgrounds, twinkling stars |
+| Luxury | Gold accents, dark backgrounds, elegance |
+
+---
+
+## Gemini API Key
 
 Resolution order:
 1. `--gemini-api-key` flag
 2. `$GEMINI_API_KEY` environment variable
 3. `~/.asc/app-shots-config.json` (via `asc app-shots config`)
 
----
-
-## Device sizes
-
-Use `--device-type` on `generate` to resize output to exact App Store dimensions.
+## Device Sizes
 
 | Device Type | Width × Height | Required |
 |---|---|---|
@@ -213,10 +207,3 @@ Use `--device-type` on `generate` to resize output to exact App Store dimensions
 | `APP_IPHONE_67` | 1290 × 2796 | ✅ |
 | `APP_IPHONE_65` | 1260 × 2736 | ✅ |
 | `APP_IPAD_PRO_129` | 2048 × 2732 | ✅ |
-
-Generate multiple sizes:
-```bash
-asc app-shots generate --file screen.png --device-type APP_IPHONE_69 --output-dir output/69
-asc app-shots generate --file screen.png --device-type APP_IPHONE_67 --output-dir output/67
-asc app-shots generate --file screen.png --device-type APP_IPAD_PRO_129 --output-dir output/ipad
-```
