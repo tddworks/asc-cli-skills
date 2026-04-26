@@ -3,203 +3,219 @@ name: asc-subscriptions
 description: |
   Manage auto-renewable subscriptions using the `asc` CLI tool.
   Use this skill when:
-  (1) Subscription groups: "asc subscription-groups list|create"
-  (2) Subscriptions: "asc subscriptions list|create|submit"
-  (3) Subscription localizations: "asc subscription-localizations list|create"
-  (4) Introductory offers: "asc subscription-offers list|create" (FREE_TRIAL, PAY_AS_YOU_GO, PAY_UP_FRONT)
-  (5) Offer codes: "asc subscription-offer-codes list/create/update"
-  (6) Custom codes: "asc subscription-offer-code-custom-codes list/create/update"
-  (7) One-time codes: "asc subscription-offer-code-one-time-codes list/create/update"
-  (8) User says "subscription group", "subscription tier", "subscription offer code", "custom code", "one-time codes", "free trial", "promo code"
+  (1) Subscription groups: "asc subscription-groups list|create|update|delete"
+  (2) Subscription group localizations (custom-app-name per locale): "asc subscription-group-localizations list|create|update|delete"
+  (3) Subscriptions: "asc subscriptions list|create|update|delete|submit|unsubmit"
+  (4) Subscription pricing: "asc subscriptions price-points list", "asc subscriptions prices set" (per-territory, with proceedsYear2)
+  (5) Subscription localizations: "asc subscription-localizations list|create|update|delete"
+  (6) Introductory offers: "asc subscription-offers list|create|delete" (FREE_TRIAL, PAY_AS_YOU_GO, PAY_UP_FRONT)
+  (7) Promotional offers (in-app, with per-territory pricing): "asc subscription-promotional-offers list|create|delete", "asc subscription-promotional-offers prices list"
+  (8) Win-back offers (lapsed subscribers): "asc win-back-offers list|create|update|delete", "asc win-back-offers prices list"
+  (9) Offer codes (3 levels): "asc subscription-offer-codes list/create/update", "asc subscription-offer-codes prices list", custom codes, one-time codes (incl. `values` for redemption CSV)
+  (10) Subscription review screenshot: "asc subscription-review-screenshot get|upload|delete"
+  (11) User says "subscription group", "subscription tier", "promotional offer", "win-back offer", "lapsed subscriber", "subscription offer code", "custom code", "one-time codes", "free trial", "promo code", "review screenshot", "Custom App Name"
 ---
 
 # asc Subscriptions
 
-Manage auto-renewable subscription groups, tiers, and localizations via the `asc` CLI.
+Manage auto-renewable subscription groups, tiers, localizations, pricing, offers, and review assets via the `asc` CLI.
 
 ## Subscription Groups
 
 ```bash
-# List
-asc subscription-groups list --app-id <APP_ID>
-
-# Create
-asc subscription-groups create \
-  --app-id <APP_ID> \
-  --reference-name "Premium Plans"
+asc subscription-groups list   --app-id <APP_ID>
+asc subscription-groups create --app-id <APP_ID> --reference-name "Premium Plans"
+asc subscription-groups update --group-id <GROUP_ID> --reference-name "Premium"
+asc subscription-groups delete --group-id <GROUP_ID>
 ```
 
-## Subscriptions
+### Group Localizations (display name + Custom App Name per locale)
 
 ```bash
-# List
-asc subscriptions list --group-id <GROUP_ID>
-
-# Create
-asc subscriptions create \
-  --group-id <GROUP_ID> \
-  --name "Monthly Premium" \
-  --product-id "com.app.monthly" \
-  --period ONE_MONTH \
-  [--family-sharable] \
-  [--group-level 1]
+asc subscription-group-localizations list   --group-id <GROUP_ID>
+asc subscription-group-localizations create --group-id <GROUP_ID> --locale en-US --name "Premium Plans" [--custom-app-name "Premium App"]
+asc subscription-group-localizations update --localization-id <LOC> [--name "..."] [--custom-app-name "..."]
+asc subscription-group-localizations delete --localization-id <LOC>
 ```
 
-**`--period`** values: `ONE_WEEK`, `ONE_MONTH`, `TWO_MONTHS`, `THREE_MONTHS`, `SIX_MONTHS`, `ONE_YEAR`
+## Subscriptions (lifecycle)
+
+```bash
+asc subscriptions list   --group-id <GROUP_ID>
+asc subscriptions create --group-id <GROUP_ID> --name "Monthly Premium" \
+  --product-id "com.app.monthly" --period ONE_MONTH \
+  [--family-sharable] [--group-level 1]
+asc subscriptions update --subscription-id <SUB_ID> \
+  [--name "..."] [--family-sharable | --not-family-sharable] [--group-level <n>] [--review-note "..."]
+asc subscriptions delete --subscription-id <SUB_ID>
+asc subscriptions submit   --subscription-id <SUB_ID>          # state must be READY_TO_SUBMIT
+asc subscriptions unsubmit --submission-id <SUBMISSION_ID>     # withdraw from review (manual Request<Void>)
+```
+
+`--period` ∈ `ONE_WEEK`, `ONE_MONTH`, `TWO_MONTHS`, `THREE_MONTHS`, `SIX_MONTHS`, `ONE_YEAR`.
+
+## Subscription Pricing (per-territory, with `proceedsYear2`)
+
+```bash
+asc subscriptions price-points list --subscription-id <SUB_ID> [--territory USA]
+
+asc subscriptions prices set \
+  --subscription-id <SUB_ID> \
+  --territory USA \
+  --price-point-id <PP> \
+  [--start-date 2026-06-01] \
+  [--preserve-current-price]
+```
+
+Subscriptions price **per-territory** (no base territory). Each price point includes `customerPrice`, `proceeds`, and `proceedsYear2`.
 
 ## Subscription Localizations
 
 ```bash
-# List
-asc subscription-localizations list --subscription-id <SUBSCRIPTION_ID>
-
-# Create
-asc subscription-localizations create \
-  --subscription-id <SUBSCRIPTION_ID> \
-  --locale en-US \
-  --name "Monthly Premium" \
-  [--description "Full access, billed monthly"]
+asc subscription-localizations list   --subscription-id <SUB_ID>
+asc subscription-localizations create --subscription-id <SUB_ID> --locale en-US --name "Monthly Premium" [--description "..."]
+asc subscription-localizations update --localization-id <LOC> [--name "..."] [--description "..."]
+asc subscription-localizations delete --localization-id <LOC>
 ```
 
-## Subscription Introductory Offers
+## Introductory Offers
 
 ```bash
-# List
-asc subscription-offers list --subscription-id <SUBSCRIPTION_ID>
+asc subscription-offers list   --subscription-id <SUB_ID>
 
-# Create free trial
-asc subscription-offers create \
-  --subscription-id <SUBSCRIPTION_ID> \
-  --duration ONE_MONTH \
-  --mode FREE_TRIAL \
-  --periods 1
+# Free trial
+asc subscription-offers create --subscription-id <SUB_ID> \
+  --duration ONE_MONTH --mode FREE_TRIAL --periods 1
 
-# Create paid intro offer (price point required for PAY_AS_YOU_GO / PAY_UP_FRONT)
-asc subscription-offers create \
-  --subscription-id <SUBSCRIPTION_ID> \
-  --duration THREE_MONTHS \
-  --mode PAY_AS_YOU_GO \
-  --periods 3 \
-  --territory USA \
-  --price-point-id <PRICE_POINT_ID>
+# Paid intro offer — price-point-id required for PAY_AS_YOU_GO / PAY_UP_FRONT
+asc subscription-offers create --subscription-id <SUB_ID> \
+  --duration THREE_MONTHS --mode PAY_AS_YOU_GO --periods 3 \
+  --territory USA --price-point-id <PP>
+
+asc subscription-offers delete --offer-id <OFFER_ID>
 ```
 
-**`--duration`** values: `THREE_DAYS`, `ONE_WEEK`, `TWO_WEEKS`, `ONE_MONTH`, `TWO_MONTHS`, `THREE_MONTHS`, `SIX_MONTHS`, `ONE_YEAR`
+`--duration` ∈ `THREE_DAYS`, `ONE_WEEK`, `TWO_WEEKS`, `ONE_MONTH`, `TWO_MONTHS`, `THREE_MONTHS`, `SIX_MONTHS`, `ONE_YEAR`. `--mode` ∈ `FREE_TRIAL`, `PAY_AS_YOU_GO`, `PAY_UP_FRONT`.
 
-**`--mode`** values: `FREE_TRIAL`, `PAY_AS_YOU_GO`, `PAY_UP_FRONT` — paid modes require `--price-point-id`
-
-## Subscription Offer Codes
-
-Manage offer codes for subscriptions. Offer codes let you distribute promotional codes with specific eligibility rules and offer terms.
-
-### List Offer Codes
+## Promotional Offers (in-app, with per-territory pricing)
 
 ```bash
-asc subscription-offer-codes list --subscription-id <SUBSCRIPTION_ID> [--pretty]
+asc subscription-promotional-offers list   --subscription-id <SUB_ID>
+
+asc subscription-promotional-offers create --subscription-id <SUB_ID> \
+  --name "Loyalty25" --offer-code loyalty25 \
+  --duration THREE_MONTHS --mode PAY_AS_YOU_GO --periods 3 \
+  --price USA=spp-1 --price GBR=spp-2          # repeatable: TERRITORY=PRICE_POINT_ID
+
+asc subscription-promotional-offers delete       --offer-id <OFFER_ID>
+asc subscription-promotional-offers prices list  --offer-id <OFFER_ID>
 ```
 
-### Create Offer Code
+`--price` is encoded inline using `${newPromoOfferPrice-N}` 1-based local IDs (matches the ASC web UI shape).
+
+## Win-Back Offers (lapsed subscribers)
 
 ```bash
-asc subscription-offer-codes create \
-  --subscription-id <SUBSCRIPTION_ID> \
+asc win-back-offers list --subscription-id <SUB_ID>
+
+asc win-back-offers create --subscription-id <SUB_ID> \
+  --reference-name "Lapsed Q4" --offer-id lapsedQ4 \
+  --duration ONE_MONTH --mode FREE_TRIAL --periods 1 \
+  --paid-months 3 --since-min 1 --since-max 6 --wait-months 2 \
+  --start-date 2026-04-01 --end-date 2026-12-31 \
+  --priority HIGH --promotion-intent USE_AUTO_GENERATED_ASSETS \
+  [--price USA=spp-1 ...]
+
+asc win-back-offers update --offer-id <OFFER_ID> \
+  [--start-date YYYY-MM-DD] [--end-date YYYY-MM-DD] \
+  [--priority HIGH|NORMAL] [--promotion-intent NOT_PROMOTED|USE_AUTO_GENERATED_ASSETS] \
+  [--paid-months <n>] [--since-min <n>] [--since-max <n>] [--wait-months <n>]
+
+asc win-back-offers delete       --offer-id <OFFER_ID>
+asc win-back-offers prices list  --offer-id <OFFER_ID>
+```
+
+Eligibility model: `--paid-months` (months as paid subscriber required), `--since-min..--since-max` (months since last subscribed range), `--wait-months` (gap between offers shown to the same customer). The win-back create body is encoded by hand because the generated SDK's `WinBackOfferPriceInlineCreate` is missing `territory` + `subscriptionPricePoint` relationships.
+
+## Subscription Offer Codes (3-level hierarchy)
+
+### Level 1 — offer code
+
+```bash
+asc subscription-offer-codes list   --subscription-id <SUB_ID>
+
+asc subscription-offer-codes create --subscription-id <SUB_ID> \
   --name "SUMMER2026" \
-  --duration ONE_MONTH \
-  --mode FREE_TRIAL \
-  --periods 1 \
-  --eligibility NEW \
-  --eligibility LAPSED \
+  --duration ONE_MONTH --mode FREE_TRIAL --periods 1 \
+  --eligibility NEW --eligibility LAPSED \
   --offer-eligibility STACKABLE
+
+asc subscription-offer-codes update       --offer-code-id <OC> --active false
+asc subscription-offer-codes prices list  --offer-code-id <OC>   # per-territory pricing (read-only)
 ```
 
-**`--eligibility`** (repeatable): `NEW`, `LAPSED`, `WIN_BACK`, `PAID_SUBSCRIBER`
-**`--offer-eligibility`**: `STACKABLE`, `INTRODUCTORY`, `SUBSCRIPTION_OFFER`
-**`--duration`**: same values as introductory offers
-**`--mode`**: `FREE_TRIAL`, `PAY_AS_YOU_GO`, `PAY_UP_FRONT`
+`--eligibility` (repeatable) ∈ `NEW`, `LAPSED`, `WIN_BACK`, `PAID_SUBSCRIBER`. `--offer-eligibility` ∈ `STACKABLE`, `INTRODUCTORY`, `SUBSCRIPTION_OFFER`.
 
-### Update Offer Code (activate/deactivate)
+### Level 2 — custom redeemable codes
 
 ```bash
-asc subscription-offer-codes update --offer-code-id <ID> --active false
+asc subscription-offer-code-custom-codes list   --offer-code-id <OC>
+asc subscription-offer-code-custom-codes create --offer-code-id <OC> \
+  --custom-code "SUMMER2026" --number-of-codes 1000 [--expiration-date 2026-12-31]
+asc subscription-offer-code-custom-codes update --custom-code-id <CC> --active false
 ```
 
-### Custom Codes
-
-Custom codes are specific redeemable strings (e.g. "SUMMER2026") tied to an offer code.
+### Level 3 — one-time use code batches
 
 ```bash
-# List
-asc subscription-offer-code-custom-codes list --offer-code-id <ID>
+asc subscription-offer-code-one-time-codes list   --offer-code-id <OC>
+asc subscription-offer-code-one-time-codes create --offer-code-id <OC> \
+  --number-of-codes 5000 --expiration-date 2026-12-31
+asc subscription-offer-code-one-time-codes update --one-time-code-id <OTC> --active false
 
-# Create
-asc subscription-offer-code-custom-codes create \
-  --offer-code-id <ID> \
-  --custom-code "SUMMER2026" \
-  --number-of-codes 1000 \
-  [--expiration-date 2026-12-31]
-
-# Deactivate
-asc subscription-offer-code-custom-codes update --custom-code-id <ID> --active false
+# Download the CSV of redemption codes (raw String — not JSON):
+asc subscription-offer-code-one-time-codes values --one-time-code-id <OTC>
 ```
 
-### One-Time Use Codes
-
-Generated code batches — Apple creates unique codes for distribution.
+## Subscription Review Screenshot (singleton)
 
 ```bash
-# List
-asc subscription-offer-code-one-time-codes list --offer-code-id <ID>
-
-# Create
-asc subscription-offer-code-one-time-codes create \
-  --offer-code-id <ID> \
-  --number-of-codes 5000 \
-  --expiration-date 2026-12-31
-
-# Deactivate
-asc subscription-offer-code-one-time-codes update --one-time-code-id <ID> --active false
+asc subscription-review-screenshot get    --subscription-id <SUB_ID>          # empty data:[] when none
+asc subscription-review-screenshot upload --subscription-id <SUB_ID> --file ./review.png
+asc subscription-review-screenshot delete --screenshot-id <RS>                # suppressed while AWAITING_UPLOAD
 ```
+
+Upload uses ASC's reserve → upload chunks → commit-with-MD5 protocol.
 
 ## CAEOAS Affordances
 
-Every subscription group response embeds ready-to-run follow-up commands:
-
-**SubscriptionGroup:**
+**SubscriptionGroup** advertises:
 ```json
 {
   "affordances": {
-    "listSubscriptions":  "asc subscriptions list --group-id <ID>",
-    "createSubscription": "asc subscriptions create --group-id <ID> --name <name> --product-id <id> --period ONE_MONTH"
+    "createLocalization":  "asc subscription-group-localizations create --group-id <ID> --locale en-US --name <name>",
+    "createSubscription":  "asc subscriptions create --group-id <ID> --name <name> --product-id <id> --period ONE_MONTH",
+    "delete":              "asc subscription-groups delete --group-id <ID>",
+    "listLocalizations":   "asc subscription-group-localizations list --group-id <ID>",
+    "listSubscriptions":   "asc subscriptions list --group-id <ID>",
+    "update":              "asc subscription-groups update --group-id <ID> --reference-name <name>"
   }
 }
 ```
 
-**Subscription:**
+**Subscription** advertises (in addition to existing keys):
 ```json
 {
-  "affordances": {
-    "createIntroductoryOffer": "asc subscription-offers create --subscription-id <ID> --duration ONE_MONTH --mode FREE_TRIAL --periods 1",
-    "createLocalization":      "asc subscription-localizations create --subscription-id <ID> --locale en-US --name <name>",
-    "listIntroductoryOffers":  "asc subscription-offers list --subscription-id <ID>",
-    "listLocalizations":       "asc subscription-localizations list --subscription-id <ID>",
-    "listOfferCodes":          "asc subscription-offer-codes list --subscription-id <ID>"
-  }
+  "createPromotionalOffer": "asc subscription-promotional-offers create --subscription-id <ID> ...",
+  "delete":                 "asc subscriptions delete --subscription-id <ID>",
+  "getReviewScreenshot":    "asc subscription-review-screenshot get --subscription-id <ID>",
+  "listPromotionalOffers":  "asc subscription-promotional-offers list --subscription-id <ID>",
+  "listWinBackOffers":      "asc win-back-offers list --subscription-id <ID>",
+  "update":                 "asc subscriptions update --subscription-id <ID> --name <name>"
 }
 ```
 
-**SubscriptionOfferCode:**
-```json
-{
-  "affordances": {
-    "listOfferCodes":   "asc subscription-offer-codes list --subscription-id <SUBSCRIPTION_ID>",
-    "listCustomCodes":  "asc subscription-offer-code-custom-codes list --offer-code-id <ID>",
-    "listOneTimeCodes": "asc subscription-offer-code-one-time-codes list --offer-code-id <ID>",
-    "deactivate":       "asc subscription-offer-codes update --offer-code-id <ID> --active false"
-  }
-}
-```
-
-`deactivate` only appears when `isActive == true`.
+`submit` only when `state == READY_TO_SUBMIT`. `SubscriptionSubmission` advertises `unsubmit`. `SubscriptionLocalization` advertises `update` + `delete`. `SubscriptionGroupLocalization` advertises `update` + `delete`. `SubscriptionPricePoint` advertises `setPrice` only when `territory != nil`. `SubscriptionPromotionalOffer` advertises `delete` + `listPrices`. `WinBackOffer` advertises `update` + `delete` + `listPrices`. `SubscriptionReviewScreenshot` advertises `delete` only once `assetState.isComplete || hasFailed`. `*OfferCode*` custom & one-time codes advertise `deactivate` only when `isActive == true`.
 
 ## Resolve App ID
 
@@ -209,59 +225,50 @@ See [project-context.md](../shared/project-context.md) — check `.asc/project.j
 
 ```bash
 APP_ID=$(cat .asc/project.json 2>/dev/null | jq -r '.appId // empty')
-# If empty: ask user or run `asc apps list | jq -r '.data[0].id'`
 
-# 1. Create a subscription group
-GROUP_ID=$(asc subscription-groups create \
-  --app-id "$APP_ID" \
-  --reference-name "Premium Plans" \
+# 1. Group + tier + group-localization
+GROUP_ID=$(asc subscription-groups create --app-id "$APP_ID" --reference-name "Premium" \
   | jq -r '.data[0].id')
+asc subscription-group-localizations create --group-id "$GROUP_ID" --locale en-US \
+  --name "Premium Plans" --custom-app-name "Premium App"
 
-# 2. Create subscription tiers
-MONTHLY_ID=$(asc subscriptions create \
-  --group-id "$GROUP_ID" \
-  --name "Monthly Premium" \
-  --product-id "com.app.monthly" \
-  --period ONE_MONTH \
-  --group-level 1 \
+SUB_ID=$(asc subscriptions create --group-id "$GROUP_ID" --name "Monthly Premium" \
+  --product-id "com.app.monthly" --period ONE_MONTH | jq -r '.data[0].id')
+asc subscription-localizations create --subscription-id "$SUB_ID" --locale en-US \
+  --name "Monthly Premium" --description "Unlock everything"
+
+# 2. Per-territory pricing
+USA_PP=$(asc subscriptions price-points list --subscription-id "$SUB_ID" --territory USA \
+  | jq -r '.data[] | select(.customerPrice == "9.99") | .id')
+asc subscriptions prices set --subscription-id "$SUB_ID" --territory USA --price-point-id "$USA_PP"
+
+# 3. Review screenshot + submit
+asc subscription-review-screenshot upload --subscription-id "$SUB_ID" --file ./review.png
+asc subscriptions submit --subscription-id "$SUB_ID"
+
+# 4. Promotional offer with per-territory pricing
+asc subscription-promotional-offers create --subscription-id "$SUB_ID" \
+  --name "Loyalty25" --offer-code loyalty25 \
+  --duration THREE_MONTHS --mode PAY_AS_YOU_GO --periods 3 \
+  --price USA=$USA_PP
+
+# 5. Win-back campaign
+asc win-back-offers create --subscription-id "$SUB_ID" \
+  --reference-name "Lapsed Q4" --offer-id lapsedQ4 \
+  --duration ONE_MONTH --mode FREE_TRIAL --periods 1 \
+  --paid-months 3 --since-min 1 --since-max 6 --wait-months 2 \
+  --start-date 2026-04-01 --end-date 2026-12-31 \
+  --priority HIGH --promotion-intent USE_AUTO_GENERATED_ASSETS
+
+# 6. Offer code + one-time redemption batch
+OC_ID=$(asc subscription-offer-codes create --subscription-id "$SUB_ID" \
+  --name "SUMMER2026" --duration ONE_MONTH --mode FREE_TRIAL --periods 1 \
+  --eligibility NEW --eligibility LAPSED --offer-eligibility STACKABLE \
   | jq -r '.data[0].id')
-
-ANNUAL_ID=$(asc subscriptions create \
-  --group-id "$GROUP_ID" \
-  --name "Annual Premium" \
-  --product-id "com.app.annual" \
-  --period ONE_YEAR \
-  --family-sharable \
-  --group-level 2 \
-  | jq -r '.data[0].id')
-
-# 3. Add localizations
-asc subscription-localizations create --subscription-id "$MONTHLY_ID" --locale en-US --name "Monthly Premium" --description "Full access, billed monthly"
-asc subscription-localizations create --subscription-id "$ANNUAL_ID" --locale en-US --name "Annual Premium" --description "Full access, billed annually — save 30%"
-
-# 4. Create an offer code with custom codes
-OC_ID=$(asc subscription-offer-codes create \
-  --subscription-id "$MONTHLY_ID" \
-  --name "SUMMER2026" \
-  --duration ONE_MONTH \
-  --mode FREE_TRIAL \
-  --periods 1 \
-  --eligibility NEW \
-  --eligibility LAPSED \
-  --offer-eligibility STACKABLE \
-  | jq -r '.data[0].id')
-
-asc subscription-offer-code-custom-codes create \
-  --offer-code-id "$OC_ID" \
-  --custom-code "SUMMER2026" \
-  --number-of-codes 1000 \
-  --expiration-date 2026-12-31
-
-# 5. Or generate one-time use codes
-asc subscription-offer-code-one-time-codes create \
-  --offer-code-id "$OC_ID" \
-  --number-of-codes 5000 \
-  --expiration-date 2026-12-31
+asc subscription-offer-code-one-time-codes create --offer-code-id "$OC_ID" \
+  --number-of-codes 5000 --expiration-date 2026-12-31
+# Distribute the codes:
+asc subscription-offer-code-one-time-codes values --one-time-code-id <OTC_ID> > codes.csv
 ```
 
 ## State Semantics
@@ -274,7 +281,14 @@ asc subscription-offer-code-one-time-codes create \
 | `isPendingReview` | `WAITING_FOR_REVIEW`, `IN_REVIEW` |
 | `isApproved` / `isLive` | `APPROVED` |
 
-`SubscriptionCustomerEligibility` values: `NEW`, `LAPSED`, `WIN_BACK`, `PAID_SUBSCRIBER`
-`SubscriptionOfferEligibility` values: `STACKABLE`, `INTRODUCTORY`, `SUBSCRIPTION_OFFER`
+`SubscriptionCustomerEligibility` ∈ `NEW`, `LAPSED`, `WIN_BACK`, `PAID_SUBSCRIBER`.
+`SubscriptionOfferEligibility` ∈ `STACKABLE`, `INTRODUCTORY`, `SUBSCRIPTION_OFFER`.
+`WinBackOfferPriority` ∈ `HIGH`, `NORMAL`. `WinBackOfferPromotionIntent` ∈ `NOT_PROMOTED`, `USE_AUTO_GENERATED_ASSETS`.
 
-Nil optional fields (`description`, `state`, `groupLevel`, `totalNumberOfCodes`) are omitted from JSON output.
+`SubscriptionReviewScreenshot.AssetState` exposes `isComplete` and `hasFailed`.
+
+Nil optional fields are omitted from JSON output. PATCH responses (update commands) return the resource with the parent id as `""` because ASC's PATCH responses don't include parent ids — refetch via `list` if you need the parent.
+
+## Reference
+
+For full domain-model and REST detail see [docs/features/iap-subscriptions.md](../../docs/features/iap-subscriptions.md) and the [iap-subscriptions/ subdocs](../../docs/features/iap-subscriptions/) (lifecycle, pricing, offer-codes, group-localizations, promotional-offers, win-back-offers, review-assets).

@@ -5,26 +5,30 @@ description: |
   Use this skill when:
   (1) Listing IAPs: "asc iap list --app-id ID"
   (2) Creating IAPs: "asc iap create --type consumable|non-consumable|non-renewing-subscription"
-  (3) IAP localizations: "asc iap-localizations create/list"
-  (4) Submitting IAP: "asc iap submit --iap-id ID"
-  (5) IAP pricing: "asc iap price-points list", "asc iap prices set"
-  (6) IAP offer codes: "asc iap-offer-codes list/create/update"
-  (7) IAP custom codes: "asc iap-offer-code-custom-codes list/create/update"
-  (8) IAP one-time codes: "asc iap-offer-code-one-time-codes list/create/update"
-  (9) User says "create in-app purchase", "list IAPs", "submit IAP", "IAP offer code", "custom code", "one-time codes"
+  (3) Updating an IAP: "asc iap update --iap-id ID" (referenceName / reviewNote / familySharable)
+  (4) Deleting an IAP: "asc iap delete --iap-id ID"
+  (5) Submitting / unsubmitting: "asc iap submit", "asc iap unsubmit --submission-id ID"
+  (6) IAP localizations: "asc iap-localizations list|create|update|delete"
+  (7) IAP pricing: "asc iap price-points list", "asc iap prices set"
+  (8) IAP offer codes (3 levels): "asc iap-offer-codes list/create/update", "asc iap-offer-codes prices list", custom codes, one-time codes (incl. `values` for redemption CSV)
+  (9) IAP review screenshot: "asc iap-review-screenshot get|upload|delete"
+  (10) IAP promotional images (1024x1024): "asc iap-images list|upload|delete"
+  (11) User says "create in-app purchase", "list IAPs", "submit IAP", "delete IAP", "unsubmit", "IAP offer code", "custom code", "one-time codes", "redemption codes", "review screenshot", "promotional image"
 ---
 
 # asc In-App Purchases
 
 Manage IAPs via the `asc` CLI.
 
-## List IAPs
+## Lifecycle
+
+### List
 
 ```bash
 asc iap list --app-id <APP_ID> [--limit N] [--pretty]
 ```
 
-## Create IAP
+### Create
 
 ```bash
 asc iap create \
@@ -34,108 +38,105 @@ asc iap create \
   --type consumable
 ```
 
-**`--type`** values: `consumable`, `non-consumable`, `non-renewing-subscription`
+`--type` ∈ `consumable`, `non-consumable`, `non-renewing-subscription`.
 
-## Submit IAP for Review
+### Update
 
 ```bash
-asc iap submit --iap-id <IAP_ID>
+asc iap update --iap-id <ID> \
+  [--reference-name "New Name"] \
+  [--review-note "Notes for App Review"] \
+  [--family-sharable | --not-family-sharable]
 ```
 
-State must be `READY_TO_SUBMIT`. The `submit` affordance appears on `InAppPurchase` only when `state == READY_TO_SUBMIT`.
-
-## IAP Price Points
+### Delete
 
 ```bash
-# List available price tiers (optionally filtered by territory)
-asc iap price-points list --iap-id <IAP_ID> [--territory USA]
+asc iap delete --iap-id <ID>
+```
 
-# Set price schedule (base territory; Apple auto-prices all other territories)
+### Submit / Unsubmit
+
+```bash
+asc iap submit --iap-id <ID>          # state must be READY_TO_SUBMIT (affordance gates this)
+asc iap unsubmit --submission-id <ID> # withdraw from review; manual Request<Void>
+```
+
+## IAP Pricing
+
+```bash
+asc iap price-points list --iap-id <ID> [--territory USA]
+
 asc iap prices set \
-  --iap-id <IAP_ID> \
+  --iap-id <ID> \
   --base-territory USA \
-  --price-point-id <PRICE_POINT_ID>
+  --price-point-id <PP>
 ```
 
-Each price point result includes a `setPrice` affordance with the ready-to-run `prices set` command.
+Apple auto-equalizes other territories from the base.
 
 ## IAP Localizations
 
 ```bash
-# List
-asc iap-localizations list --iap-id <IAP_ID>
-
-# Create
-asc iap-localizations create \
-  --iap-id <IAP_ID> \
-  --locale en-US \
-  --name "Gold Coins" \
-  [--description "In-game currency"]
+asc iap-localizations list   --iap-id <ID>
+asc iap-localizations create --iap-id <ID> --locale en-US --name "Gold Coins" [--description "In-game currency"]
+asc iap-localizations update --localization-id <LOC> [--name "New"] [--description "..."]
+asc iap-localizations delete --localization-id <LOC>
 ```
 
-## IAP Offer Codes
+## IAP Offer Codes (3-level hierarchy)
 
-Manage offer codes for in-app purchases. Offer codes let you distribute promotional codes to customers.
-
-### List Offer Codes
+### Level 1 — offer code
 
 ```bash
-asc iap-offer-codes list --iap-id <IAP_ID> [--pretty]
+asc iap-offer-codes list   --iap-id <ID>
+asc iap-offer-codes create --iap-id <ID> --name "FREEGEMS" \
+  --eligibility NON_SPENDER --eligibility CHURNED_SPENDER
+asc iap-offer-codes update --offer-code-id <OC> --active false
+asc iap-offer-codes prices list --offer-code-id <OC>   # per-territory pricing (read-only)
 ```
 
-### Create Offer Code
+`--eligibility` (repeatable) ∈ `NON_SPENDER`, `ACTIVE_SPENDER`, `CHURNED_SPENDER`.
+
+### Level 2 — custom redeemable codes
 
 ```bash
-asc iap-offer-codes create \
-  --iap-id <IAP_ID> \
-  --name "FREEGEMS" \
-  --eligibility NON_SPENDER \
-  --eligibility CHURNED_SPENDER
+asc iap-offer-code-custom-codes list   --offer-code-id <OC>
+asc iap-offer-code-custom-codes create --offer-code-id <OC> \
+  --custom-code "FREEGEMS100" --number-of-codes 500 [--expiration-date 2026-12-31]
+asc iap-offer-code-custom-codes update --custom-code-id <CC> --active false
 ```
 
-**`--eligibility`** (repeatable): `NON_SPENDER`, `ACTIVE_SPENDER`, `CHURNED_SPENDER`
-
-### Update Offer Code (activate/deactivate)
+### Level 3 — one-time use code batches
 
 ```bash
-asc iap-offer-codes update --offer-code-id <ID> --active false
+asc iap-offer-code-one-time-codes list   --offer-code-id <OC>
+asc iap-offer-code-one-time-codes create --offer-code-id <OC> \
+  --number-of-codes 3000 --expiration-date 2026-06-30
+asc iap-offer-code-one-time-codes update --one-time-code-id <OTC> --active false
+
+# Download the CSV of redemption codes (raw String — not JSON):
+asc iap-offer-code-one-time-codes values --one-time-code-id <OTC>
 ```
 
-### Custom Codes
+## IAP Review Assets
 
-Custom codes are specific redeemable strings (e.g. "FREEGEMS100") tied to an offer code.
+### Review screenshot (singleton — one per IAP)
 
 ```bash
-# List
-asc iap-offer-code-custom-codes list --offer-code-id <ID>
-
-# Create
-asc iap-offer-code-custom-codes create \
-  --offer-code-id <ID> \
-  --custom-code "FREEGEMS100" \
-  --number-of-codes 500 \
-  [--expiration-date 2026-12-31]
-
-# Deactivate
-asc iap-offer-code-custom-codes update --custom-code-id <ID> --active false
+asc iap-review-screenshot get    --iap-id <ID>          # returns empty data:[] when none uploaded
+asc iap-review-screenshot upload --iap-id <ID> --file ./review.png
+asc iap-review-screenshot delete --screenshot-id <RS>   # suppressed while assetState == AWAITING_UPLOAD
 ```
 
-### One-Time Use Codes
+Upload uses ASC's standard reserve → upload chunks → commit-with-MD5 protocol.
 
-Generated code batches — Apple creates unique codes for distribution.
+### Promotional images (1024×1024, multiple per IAP)
 
 ```bash
-# List
-asc iap-offer-code-one-time-codes list --offer-code-id <ID>
-
-# Create
-asc iap-offer-code-one-time-codes create \
-  --offer-code-id <ID> \
-  --number-of-codes 3000 \
-  --expiration-date 2026-06-30
-
-# Deactivate
-asc iap-offer-code-one-time-codes update --one-time-code-id <ID> --active false
+asc iap-images list   --iap-id <ID>
+asc iap-images upload --iap-id <ID> --file ./promo-1024.png
+asc iap-images delete --image-id <IMG>                  # suppressed while state.isPendingReview
 ```
 
 ## CAEOAS Affordances
@@ -145,30 +146,22 @@ Every IAP response embeds ready-to-run follow-up commands:
 ```json
 {
   "affordances": {
-    "listLocalizations":  "asc iap-localizations list --iap-id <ID>",
-    "createLocalization": "asc iap-localizations create --iap-id <ID> --locale en-US --name <name>",
-    "listOfferCodes":     "asc iap-offer-codes list --iap-id <ID>",
-    "listPricePoints":    "asc iap price-points list --iap-id <ID>",
-    "submit":             "asc iap submit --iap-id <ID>"
+    "createLocalization":  "asc iap-localizations create --iap-id <ID> --locale en-US --name <name>",
+    "delete":              "asc iap delete --iap-id <ID>",
+    "getReviewScreenshot": "asc iap-review-screenshot get --iap-id <ID>",
+    "listImages":          "asc iap-images list --iap-id <ID>",
+    "listLocalizations":   "asc iap-localizations list --iap-id <ID>",
+    "listOfferCodes":      "asc iap-offer-codes list --iap-id <ID>",
+    "listPricePoints":     "asc iap price-points list --iap-id <ID>",
+    "submit":              "asc iap submit --iap-id <ID>",
+    "update":              "asc iap update --iap-id <ID> --reference-name <name>"
   }
 }
 ```
 
 `submit` only appears when `state == READY_TO_SUBMIT`. Each price point includes `setPrice` only when territory is known.
 
-**IAP Offer Code affordances:**
-```json
-{
-  "affordances": {
-    "listOfferCodes":  "asc iap-offer-codes list --iap-id <ID>",
-    "listCustomCodes": "asc iap-offer-code-custom-codes list --offer-code-id <ID>",
-    "listOneTimeCodes":"asc iap-offer-code-one-time-codes list --offer-code-id <ID>",
-    "deactivate":      "asc iap-offer-codes update --offer-code-id <ID> --active false"
-  }
-}
-```
-
-`deactivate` only appears when `isActive == true`.
+**InAppPurchaseSubmission** advertises `unsubmit`. **InAppPurchaseLocalization** advertises `update` + `delete`. **InAppPurchasePromotionalImage** advertises `delete` only when `!state.isPendingReview`. **InAppPurchaseReviewScreenshot** advertises `delete` only once `assetState.isComplete || hasFailed`.
 
 ## Resolve App ID
 
@@ -178,45 +171,32 @@ See [project-context.md](../shared/project-context.md) — check `.asc/project.j
 
 ```bash
 APP_ID=$(cat .asc/project.json 2>/dev/null | jq -r '.appId // empty')
-# If empty: ask user or run `asc apps list | jq -r '.data[0].id'`
 
-# 1. Create a consumable IAP
-IAP_ID=$(asc iap create \
-  --app-id "$APP_ID" \
-  --reference-name "Gold Coins" \
-  --product-id "com.app.goldcoins" \
-  --type consumable \
-  | jq -r '.data[0].id')
-
-# 2. Add localizations
+# 1. Create + localize
+IAP_ID=$(asc iap create --app-id "$APP_ID" --reference-name "Gold Coins" \
+  --product-id "com.app.goldcoins" --type consumable | jq -r '.data[0].id')
 asc iap-localizations create --iap-id "$IAP_ID" --locale en-US --name "Gold Coins" --description "In-game currency"
 asc iap-localizations create --iap-id "$IAP_ID" --locale zh-Hans --name "金币"
 
-# 3. Set pricing and submit
+# 2. Set price (Tier 1 USA, Apple auto-equalizes)
 PRICE_ID=$(asc iap price-points list --iap-id "$IAP_ID" --territory USA \
   | jq -r '.data[] | select(.customerPrice == "0.99") | .id')
 asc iap prices set --iap-id "$IAP_ID" --base-territory USA --price-point-id "$PRICE_ID"
+
+# 3. Add review screenshot + promo image
+asc iap-review-screenshot upload --iap-id "$IAP_ID" --file ./review.png
+asc iap-images upload --iap-id "$IAP_ID" --file ./promo-1024.png
+
+# 4. Submit
 asc iap submit --iap-id "$IAP_ID"
 
-# 4. Create an offer code with custom codes
-OC_ID=$(asc iap-offer-codes create \
-  --iap-id "$IAP_ID" \
-  --name "LAUNCH_PROMO" \
-  --eligibility NON_SPENDER \
-  --eligibility CHURNED_SPENDER \
-  | jq -r '.data[0].id')
-
-asc iap-offer-code-custom-codes create \
-  --offer-code-id "$OC_ID" \
-  --custom-code "LAUNCH2026" \
-  --number-of-codes 1000 \
-  --expiration-date 2026-12-31
-
-# 5. Or generate one-time use codes
-asc iap-offer-code-one-time-codes create \
-  --offer-code-id "$OC_ID" \
-  --number-of-codes 5000 \
-  --expiration-date 2026-12-31
+# 5. Optional: offer code + redemption batch
+OC_ID=$(asc iap-offer-codes create --iap-id "$IAP_ID" --name "LAUNCH_PROMO" \
+  --eligibility NON_SPENDER --eligibility CHURNED_SPENDER | jq -r '.data[0].id')
+asc iap-offer-code-one-time-codes create --offer-code-id "$OC_ID" \
+  --number-of-codes 5000 --expiration-date 2026-12-31
+# Download the CSV for distribution:
+asc iap-offer-code-one-time-codes values --one-time-code-id <OTC_ID> > codes.csv
 ```
 
 ## State Semantics
@@ -229,6 +209,12 @@ asc iap-offer-code-one-time-codes create \
 | `isPendingReview` | `WAITING_FOR_REVIEW`, `IN_REVIEW` |
 | `isApproved` / `isLive` | `APPROVED` |
 
-`IAPCustomerEligibility` values: `NON_SPENDER`, `ACTIVE_SPENDER`, `CHURNED_SPENDER`
+`IAPCustomerEligibility` ∈ `NON_SPENDER`, `ACTIVE_SPENDER`, `CHURNED_SPENDER`.
 
-Nil optional fields (`description`, `state`, `totalNumberOfCodes`) are omitted from JSON output.
+`InAppPurchaseReviewScreenshot.AssetState` exposes `isComplete` (uploadComplete or complete) and `hasFailed`. `InAppPurchasePromotionalImage.ImageState` exposes `isApproved` and `isPendingReview`.
+
+Nil optional fields are omitted from JSON output.
+
+## Reference
+
+For full domain-model and REST detail see [docs/features/iap-subscriptions.md](../../docs/features/iap-subscriptions.md) and the [iap-subscriptions/ subdocs](../../docs/features/iap-subscriptions/).
