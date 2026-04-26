@@ -4,7 +4,8 @@ description: |
   Manage TestFlight beta groups and testers using the `asc` CLI tool.
   Use this skill when:
   (1) Listing beta groups for an app (`asc testflight groups list`)
-  (2) Listing testers in a group (`asc testflight testers list --group-id <id>`)
+  (2) Creating internal or external beta groups (`asc testflight groups create --internal`)
+  (3) Listing testers in a group (`asc testflight testers list --group-id <id>`)
   (3) Adding a single tester by email (`asc testflight testers add`)
   (4) Removing a tester from a group (`asc testflight testers remove`)
   (5) Bulk-importing testers from a CSV file (`asc testflight testers import`)

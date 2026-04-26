@@ -19,6 +19,33 @@ asc testflight groups list [--app-id <APP_ID>] [--limit <N>] [--pretty] [--outpu
 
 ---
 
+## asc testflight groups create
+
+Create a new TestFlight beta group (external by default; `--internal` for an internal group).
+
+```bash
+asc testflight groups create --app-id <APP_ID> --name <NAME> [--internal] \
+  [--public-link-enabled] [--feedback-enabled] [--pretty] [--output <FORMAT>]
+```
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--app-id` | String | *(required)* | App ID that owns the group |
+| `--name` | String | *(required)* | Group name |
+| `--internal` | Bool | `false` | Create an internal group (team members only). Default creates an external group. |
+| `--public-link-enabled` | Bool | `false` | Enable the public TestFlight link (external groups only) |
+| `--feedback-enabled` | Bool | `false` | Enable tester feedback (external groups only) |
+| `--output` | String | `json` | `json` \| `table` \| `markdown` |
+| `--pretty` | Bool | `false` | Pretty-print JSON |
+
+**Examples:**
+```bash
+asc testflight groups create --app-id 6450406024 --name "External Beta" --public-link-enabled
+asc testflight groups create --app-id 6450406024 --name "Company Team" --internal
+```
+
+---
+
 ## asc testflight testers list
 
 List all testers in a specific beta group.
