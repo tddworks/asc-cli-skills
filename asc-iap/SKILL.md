@@ -112,11 +112,18 @@ asc iap-offer-code-custom-codes update --custom-code-id <CC> --active false
 ```bash
 asc iap-offer-code-one-time-codes list   --offer-code-id <OC>
 asc iap-offer-code-one-time-codes create --offer-code-id <OC> \
-  --number-of-codes 3000 --expiration-date 2026-06-30
+  --number-of-codes 3000 --expiration-date 2026-06-30 [--environment production|sandbox]
 asc iap-offer-code-one-time-codes update --one-time-code-id <OTC> --active false
 
 # Download the CSV of redemption codes (raw String — not JSON):
 asc iap-offer-code-one-time-codes values --one-time-code-id <OTC>
+```
+
+`--environment` defaults to `production`. Sandbox batches redeem against sandbox tester accounts (≈10,000/quarter ceiling) — production batches against live App Store accounts (≈150,000/quarter ceiling). Each `InAppPurchaseOfferCode` reports usage against both ceilings via `productionCodeCount` / `sandboxCodeCount`, and each one-time-use code row carries its `environment` so you can filter:
+
+```bash
+asc iap-offer-code-one-time-codes list --offer-code-id <OC> \
+  | jq '.data[] | select(.environment == "SANDBOX")'
 ```
 
 ## IAP Review Assets

@@ -170,12 +170,14 @@ asc subscription-offer-code-custom-codes update --custom-code-id <CC> --active f
 ```bash
 asc subscription-offer-code-one-time-codes list   --offer-code-id <OC>
 asc subscription-offer-code-one-time-codes create --offer-code-id <OC> \
-  --number-of-codes 5000 --expiration-date 2026-12-31
+  --number-of-codes 5000 --expiration-date 2026-12-31 [--environment production|sandbox]
 asc subscription-offer-code-one-time-codes update --one-time-code-id <OTC> --active false
 
 # Download the CSV of redemption codes (raw String — not JSON):
 asc subscription-offer-code-one-time-codes values --one-time-code-id <OTC>
 ```
+
+`--environment` defaults to `production`. Sandbox batches redeem against sandbox tester accounts (≈10,000/quarter ceiling); production batches against live accounts (≈150,000/quarter ceiling). Each `SubscriptionOfferCode` reports usage against both via `productionCodeCount` / `sandboxCodeCount`, and each one-time-use row carries its `environment` for filtering.
 
 ## Subscription Review Screenshot (singleton)
 
