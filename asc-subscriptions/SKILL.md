@@ -179,6 +179,14 @@ asc subscription-offer-code-one-time-codes values --one-time-code-id <OTC>
 
 `--environment` defaults to `production`. Sandbox batches redeem against sandbox tester accounts (≈10,000/quarter ceiling); production batches against live accounts (≈150,000/quarter ceiling). Each `SubscriptionOfferCode` reports usage against both via `productionCodeCount` / `sandboxCodeCount`, and each one-time-use row carries its `environment` for filtering.
 
+REST equivalents:
+
+```bash
+GET    /api/v1/subscription-offer-codes/{offerCodeId}/one-time-codes
+POST   /api/v1/subscription-offer-codes/{offerCodeId}/one-time-codes   # body: {numberOfCodes, expirationDate, environment?}
+PATCH  /api/v1/subscription-offer-code-one-time-codes/{oneTimeCodeId}  # body: {isActive: false}
+```
+
 ## Subscription Review Screenshot (singleton)
 
 ```bash

@@ -126,6 +126,14 @@ asc iap-offer-code-one-time-codes list --offer-code-id <OC> \
   | jq '.data[] | select(.environment == "SANDBOX")'
 ```
 
+REST equivalents:
+
+```bash
+GET    /api/v1/iap-offer-codes/{offerCodeId}/one-time-codes
+POST   /api/v1/iap-offer-codes/{offerCodeId}/one-time-codes   # body: {numberOfCodes, expirationDate, environment?}
+PATCH  /api/v1/iap-offer-code-one-time-codes/{oneTimeCodeId}  # body: {isActive: false}
+```
+
 ## IAP Review Assets
 
 ### Review screenshot (singleton — one per IAP)
