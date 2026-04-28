@@ -91,10 +91,14 @@ asc iap-localizations delete --localization-id <LOC>
 ```bash
 asc iap-offer-codes list   --iap-id <ID>
 asc iap-offer-codes create --iap-id <ID> --name "FREEGEMS" \
-  --eligibility NON_SPENDER --eligibility CHURNED_SPENDER
+  --eligibility NON_SPENDER --eligibility CHURNED_SPENDER \
+  --price USA=pp-usa --price JPN=pp-jpn \
+  --free-territory BRA --free-territory IND
 asc iap-offer-codes update --offer-code-id <OC> --active false
 asc iap-offer-codes prices list --offer-code-id <OC>   # per-territory pricing (read-only)
 ```
+
+**Pricing is set once, at creation.** ASC's `prices` relationship is read-only after the offer code exists, so include every territory you want covered via `--price` (paid) or `--free-territory`. Without these flags the offer code is created with no per-territory pricing and cannot be fixed up later.
 
 `--eligibility` (repeatable) ∈ `NON_SPENDER`, `ACTIVE_SPENDER`, `CHURNED_SPENDER`.
 

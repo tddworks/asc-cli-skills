@@ -148,11 +148,16 @@ asc subscription-offer-codes create --subscription-id <SUB_ID> \
   --name "SUMMER2026" \
   --duration ONE_MONTH --mode FREE_TRIAL --periods 1 \
   --eligibility NEW --eligibility LAPSED \
-  --offer-eligibility STACKABLE
+  --offer-eligibility STACKABLE \
+  --price USA=spp-usa --price JPN=spp-jpn \
+  --free-territory BRA \
+  [--auto-renew true|false]
 
 asc subscription-offer-codes update       --offer-code-id <OC> --active false
 asc subscription-offer-codes prices list  --offer-code-id <OC>   # per-territory pricing (read-only)
 ```
+
+**Pricing is set once, at creation** (`prices` is read-only after — see the IAP skill's note for details). Use `--auto-renew false` to create a non-renewing one-time offer; ASC only accepts `--mode FREE_TRIAL` in that case.
 
 `--eligibility` (repeatable) ∈ `NEW`, `LAPSED`, `WIN_BACK`, `PAID_SUBSCRIBER`. `--offer-eligibility` ∈ `STACKABLE`, `INTRODUCTORY`, `SUBSCRIPTION_OFFER`.
 
