@@ -8,8 +8,11 @@ description: |
   (3) Getting a specific submission: "asc beta-review submissions get --submission-id ID"
   (4) Getting beta review contact details: "asc beta-review detail get --app-id ID"
   (5) Updating beta review contact info or demo account: "asc beta-review detail update --detail-id ID ..."
-  (6) User says "submit for beta review", "TestFlight review", "beta review status",
-      "beta review contact", "external testing review", or any beta app review task
+  (6) Managing the per-locale **Beta App Description** and feedback metadata
+      shown to TestFlight testers: "asc beta-app-localizations {list,get,create,update,delete}"
+  (7) User says "submit for beta review", "TestFlight review", "beta review status",
+      "beta review contact", "external testing review", "beta app description",
+      "TestFlight description", or any beta app review task
 ---
 
 # Beta App Review with `asc`
@@ -103,6 +106,48 @@ asc beta-review detail update --detail-id <DETAIL_ID> \
 
 Only supplied flags are sent — unspecified fields are left unchanged.
 
+## Beta App Localizations — `asc beta-app-localizations`
+
+Per-locale **Beta App Description**, tester feedback email, marketing URL, and privacy policy URL shown to TestFlight testers. Required by Apple before opening external testing — a missing/empty description for the primary locale is the most common reason an external-testing submission is rejected.
+
+> Distinct from the existing commands:
+> - `asc beta-review detail` → app-level review **contact info** + demo account
+> - `asc builds update-beta-notes` → per-build "What to Test" notes
+> - `asc beta-app-localizations` → **per-locale beta app description** (this section)
+
+```bash
+# List existing beta localizations for an app
+asc beta-app-localizations list --app-id <APP_ID> [--pretty]
+
+# Get a single localization
+asc beta-app-localizations get --localization-id <ID>
+
+# Create a new localization (Apple auto-creates one for the primary locale)
+asc beta-app-localizations create \
+  --app-id <APP_ID> \
+  --locale en-US \
+  [--description <text>] \
+  [--feedback-email <email>] \
+  [--marketing-url <url>] \
+  [--privacy-policy-url <url>] \
+  [--tv-os-privacy-policy <text>]
+
+# Patch — only supplied flags are sent; omitted fields unchanged
+asc beta-app-localizations update \
+  --localization-id <ID> \
+  [--description <text>] \
+  [--feedback-email <email>] \
+  [--marketing-url <url>] \
+  [--privacy-policy-url <url>]
+
+# Delete (e.g. removing a no-longer-supported locale)
+asc beta-app-localizations delete --localization-id <ID>
+```
+
+Affordances on each localization: `delete`, `get`, `listSiblings` (`asc beta-app-localizations list --app-id <appId>`), `update`.
+
+See `docs/features/beta-app-localizations.md` for the full reference.
+
 ## BetaReviewState
 
 | State | Description |
@@ -136,10 +181,22 @@ asc beta-review detail update --detail-id "$DETAIL_ID" \
   --contact-email "john@example.com" \
   --contact-phone "+1-555-0100"
 
-# 4. Submit the build for beta app review
+# 4. Set the Beta App Description for the primary locale (required for external testing)
+EXISTING=$(asc beta-app-localizations list --app-id "$APP_ID" | jq -r '.data[] | select(.locale == "en-US") | .id')
+if [ -z "$EXISTING" ]; then
+  asc beta-app-localizations create --app-id "$APP_ID" --locale en-US \
+    --description "Welcome to the beta — please test the new dashboard." \
+    --feedback-email beta@example.com
+else
+  asc beta-app-localizations update --localization-id "$EXISTING" \
+    --description "Welcome to the beta — please test the new dashboard." \
+    --feedback-email beta@example.com
+fi
+
+# 5. Submit the build for beta app review
 asc beta-review submissions create --build-id "$BUILD_ID" --pretty
 
-# 5. Check submission status
+# 6. Check submission status
 asc beta-review submissions list --build-id "$BUILD_ID" --pretty
 ```
 
