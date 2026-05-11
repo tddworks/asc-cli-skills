@@ -1,15 +1,11 @@
 ---
 name: asc-new-app-release
 description: |
-  First-time App Store release for a brand new app using the `asc` CLI. Guides through the entire journey from zero to submitted: register bundle ID, create app on App Store Connect, set all metadata (category, description, keywords, URLs, privacy policy), configure pricing, review contact, age rating, privacy nutrition labels, take screenshots, archive + upload build, and submit for review.
-  Use this skill when:
-  (1) User wants to publish a new app for the first time: "release my app", "submit to App Store", "publish to App Store"
-  (2) User says "create app on App Store Connect", "set up my app for the App Store"
-  (3) User says "first release", "initial submission", "new app submission"
-  (4) User has a working app but has never submitted it to the App Store before
-  (5) User asks "what do I need to submit my app?", "how do I get my app on the App Store?"
-  (6) The app doesn't exist yet on App Store Connect (no app ID, no version, nothing)
-  Do NOT use this skill for subsequent releases of an existing app — use `asc-release-workflow` instead.
+  Handle the first App Store release for a brand new app with the `asc` CLI: register a bundle ID,
+  create the App Store Connect app, configure metadata/compliance/pricing, upload a build, and submit
+  for review. Use this when the app does not exist yet in App Store Connect and the user asks for a
+  first release, initial submission, or setup from zero. Do not use it for later releases of an
+  existing app; use `asc-release-workflow` for that.
 ---
 
 # First-Time App Store Release

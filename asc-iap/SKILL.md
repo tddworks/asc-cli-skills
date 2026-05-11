@@ -1,19 +1,10 @@
 ---
 name: asc-iap
 description: |
-  Manage In-App Purchases (IAPs) using the `asc` CLI tool.
-  Use this skill when:
-  (1) Listing IAPs: "asc iap list --app-id ID"
-  (2) Creating IAPs: "asc iap create --type consumable|non-consumable|non-renewing-subscription"
-  (3) Updating an IAP: "asc iap update --iap-id ID" (referenceName / reviewNote / familySharable)
-  (4) Deleting an IAP: "asc iap delete --iap-id ID"
-  (5) Submitting / unsubmitting: "asc iap submit", "asc iap unsubmit --submission-id ID"
-  (6) IAP localizations: "asc iap-localizations list|create|update|delete"
-  (7) IAP pricing: "asc iap price-points list", "asc iap prices set"
-  (8) IAP offer codes (3 levels): "asc iap-offer-codes list/create/update", "asc iap-offer-codes prices list", custom codes, one-time codes (incl. `values` for redemption CSV)
-  (9) IAP review screenshot: "asc iap-review-screenshot get|upload|delete"
-  (10) IAP promotional images (1024x1024): "asc iap-images list|upload|delete"
-  (11) User says "create in-app purchase", "list IAPs", "submit IAP", "delete IAP", "unsubmit", "IAP offer code", "custom code", "one-time codes", "redemption codes", "review screenshot", "promotional image"
+  Manage In-App Purchases with the `asc` CLI: list/create/update/delete/submit/unsubmit IAPs, manage
+  localizations and pricing, handle IAP offer codes, and upload or remove review screenshots and 1024x1024
+  promotional images. Trigger on requests to create or submit IAPs, manage redemption codes, change pricing,
+  edit review assets, or maintain IAP metadata.
 ---
 
 # asc In-App Purchases
