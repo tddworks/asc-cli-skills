@@ -18,7 +18,7 @@ A CLI for App Store Connect — automate builds, releases, TestFlight, subscript
 ## Install & Authenticate
 
 ```bash
-brew install tddworks/tap/asccli
+brew install asccli
 
 asc auth login \
   --key-id YOUR_KEY_ID \
