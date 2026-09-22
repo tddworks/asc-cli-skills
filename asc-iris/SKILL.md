@@ -9,6 +9,7 @@ description: |
   (4) User mentions "iris", "private API", "cookie-based auth", "create app", "register app", "new app on App Store Connect"
   (5) User wants to do something that the public API cannot do (e.g. app creation)
   (6) Troubleshooting iris cookie errors or "No App Store Connect cookies found" messages
+  (7) Reading App Review rejection messages: "asc iris resolution-center get --submission-id ID", "why was my app rejected", "resolution center", "rejection reason", "App Review message"
 ---
 
 # asc iris — App Store Connect Private API
@@ -124,6 +125,22 @@ asc iris apps create \
 ```
 
 **Important:** The `--bundle-id` must reference an already-registered bundle identifier. Register one first with `asc bundle-ids register` if needed.
+
+### resolution-center get — read App Review's rejection message
+
+The official API only reports *that* a submission has `UNRESOLVED_ISSUES`; the
+reviewer's message text and guideline citations are iris-only. When a
+submission or rejected item shows the `getResolutionDetails` affordance, run:
+
+```bash
+asc iris resolution-center get --submission-id <SUBMISSION_ID> --plain-text --pretty
+asc iris resolution-center get --submission-id <SUBMISSION_ID> --out ./rc-attachments  # also download attachments
+```
+
+Returns the Resolution Center thread: `messages[]` (reviewer text, `fromActor`
+APPLE/USER), `rejectionReasons[]` (guideline `section`/`code`/description),
+and `attachments[]` when App Review attached files (`--out <dir>` downloads them).
+Full docs: [docs/features/resolution-center.md](../../docs/features/resolution-center.md)
 
 ## Typical Workflow
 
