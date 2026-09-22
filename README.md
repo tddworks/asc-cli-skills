@@ -44,6 +44,7 @@ asc skills install --name asc-testflight
 | [asc-check-readiness](asc-check-readiness/) | Pre-flight submission checks for App Store versions |
 | [asc-code-signing](asc-code-signing/) | Bundle IDs, certificates, devices, and provisioning profiles |
 | [asc-customer-reviews](asc-customer-reviews/) | Customer reviews and developer responses |
+| [asc-experiments](asc-experiments/) | Product Page Optimization tests (experiments, treatments, locales) |
 | [asc-game-center](asc-game-center/) | Game Center achievements and leaderboards |
 | [asc-iap](asc-iap/) | In-App Purchases (consumable, non-consumable, non-renewing) |
 | [asc-init](asc-init/) | Initialize project context (`.asc/project.json`) |
