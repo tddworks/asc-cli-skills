@@ -1,19 +1,10 @@
 ---
 name: asc-subscriptions
 description: |
-  Manage auto-renewable subscriptions using the `asc` CLI tool.
-  Use this skill when:
-  (1) Subscription groups: "asc subscription-groups list|create|update|delete"
-  (2) Subscription group localizations (custom-app-name per locale): "asc subscription-group-localizations list|create|update|delete"
-  (3) Subscriptions: "asc subscriptions list|create|update|delete|submit|unsubmit"
-  (4) Subscription pricing: "asc subscriptions price-points list", "asc subscriptions prices set" (per-territory, with proceedsYear2)
-  (5) Subscription localizations: "asc subscription-localizations list|create|update|delete"
-  (6) Introductory offers: "asc subscription-offers list|create|delete" (FREE_TRIAL, PAY_AS_YOU_GO, PAY_UP_FRONT)
-  (7) Promotional offers (in-app, with per-territory pricing): "asc subscription-promotional-offers list|create|delete", "asc subscription-promotional-offers prices list"
-  (8) Win-back offers (lapsed subscribers): "asc win-back-offers list|create|update|delete", "asc win-back-offers prices list"
-  (9) Offer codes (3 levels): "asc subscription-offer-codes list/create/update", "asc subscription-offer-codes prices list", custom codes, one-time codes (incl. `values` for redemption CSV)
-  (10) Subscription review screenshot: "asc subscription-review-screenshot get|upload|delete"
-  (11) User says "subscription group", "subscription tier", "promotional offer", "win-back offer", "lapsed subscriber", "subscription offer code", "custom code", "one-time codes", "free trial", "promo code", "review screenshot", "Custom App Name"
+  Manage auto-renewable subscriptions with the `asc` CLI: subscription groups, group localizations,
+  subscriptions, pricing, subscription localizations, introductory offers, promotional offers, win-back
+  offers, offer codes, and subscription review screenshots. Trigger on requests about subscription tiers,
+  free trials, promo or custom codes, lapsed-subscriber win-back offers, Custom App Name, or review assets.
 ---
 
 # asc Subscriptions

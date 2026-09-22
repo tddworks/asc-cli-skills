@@ -1,20 +1,11 @@
 ---
 name: asc-availability
 description: |
-  Manage app, IAP, and subscription territory availability using the `asc` CLI tool.
-  Use this skill when:
-  (1) Listing all App Store territories: "asc territories list"
-  (2) Getting app territory availability with per-territory status: "asc app-availability get --app-id ID"
-  (3) Getting IAP territory availability: "asc iap-availability get --iap-id ID"
-  (4) Creating IAP territory availability: "asc iap-availability create --iap-id ID --available-in-new-territories --territory USA"
-  (5) Getting subscription territory availability: "asc subscription-availability get --subscription-id ID"
-  (6) Creating subscription territory availability: "asc subscription-availability create --subscription-id ID --available-in-new-territories --territory USA"
-  (7) User says "territory availability", "app availability", "iap availability", "subscription availability",
-      "which territories", "available in new territories", "list territories",
-      "set territory", "territory management", "where is my app available",
-      "why can't I sell in this country", "blocked territory", "content status",
-      "make available in all countries", "restrict to specific markets",
-      "check availability", "which countries", "which markets", "pre-order territory"
+  Manage app, IAP, and subscription territory availability with the `asc` CLI.
+  Use this for `asc territories list`, `asc app-availability get`, `asc iap-availability get|create`,
+  and `asc subscription-availability get|create`. Trigger on requests about app/IAP/subscription
+  availability, which countries or markets are enabled, blocked territory/content status, pre-order
+  territory status, enabling new territories, or restricting sales to specific regions.
 ---
 
 # App, IAP & Subscription Territory Availability
