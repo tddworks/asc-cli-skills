@@ -173,18 +173,23 @@ asc age-rating update --declaration-id <APP_INFO_ID> \
   --age-rating-override SEVENTEEN_PLUS
 ```
 
-### Step 3.2: Pricing
+### Step 3.2: Pricing, availability and content rights
 
-Set the app to Free (or the desired price tier). Currently pricing must be configured in the App Store Connect web UI — there's no `asc` command for it yet.
+A submission is refused until the app has a price, and a new app isn't sold anywhere until its availability is set up. Ask the user the price (Free is the usual choice when the app earns through in-app purchases or subscriptions) and where to sell it (usually everywhere).
 
-Tell the user: "Go to App Store Connect > Your App > Pricing and Availability > set the price to Free (or your desired price)."
-
-Alternatively, if the user has the web session:
 ```bash
-# Check current pricing
-asc versions check-readiness --version-id <VERSION_ID>
-# Look at pricingCheck.pass — if false, pricing needs to be set in the web UI
+# Price: pick a point in the base territory; Apple equalizes the rest. customerPrice 0.0 = Free.
+FREE=$(asc apps price-points list --app-id <APP_ID> | jq -r '.data[] | select(.customerPrice == "0.0") | .id')
+asc apps prices set --app-id <APP_ID> --base-territory USA --price-point-id "$FREE"
+
+# Availability (App Store Connect's "Set Up Availability")
+asc app-availability create --app-id <APP_ID> --all-territories --available-in-new-territories
+
+# Content rights — a legal declaration, so ask the user which is true
+asc apps update --app-id <APP_ID> --content-rights-declaration DOES_NOT_USE_THIRD_PARTY_CONTENT   # or USES_THIRD_PARTY_CONTENT
 ```
+
+Before release every territory reports `CANNOT_SELL` + `AVAILABLE_FOR_SALE_UNRELEASED_APP`; that's expected.
 
 ### Step 3.3: Review Contact Info
 
@@ -199,12 +204,9 @@ Ask the user for their contact email and phone number. This is required for App 
 
 ### Step 3.4: Privacy Nutrition Labels
 
-If the app collects no user data:
-```bash
-# This is typically done in the App Store Connect web UI
-# Tell the user to go to: App Store Connect > App > App Privacy > Get Started
-# Select "No, we don't collect data from this app"
-```
+App Privacy answers have **no public App Store Connect API** — they can only be published in the App Store Connect web page (or through a web session). Until they're published, the submission is refused with "You must have published answers to your app's data usages."
+
+If the app collects no user data, tell the user: App Store Connect > App > App Privacy > Get Started > "No, we don't collect data from this app" > Publish.
 
 If the app does collect data, walk through each data type. See the [Apple privacy documentation](https://developer.apple.com/app-store/app-privacy-details/) for categories.
 
@@ -280,7 +282,7 @@ Review the output carefully. For a first-time app, common missing items:
 |-------|---------------|-----------|
 | `stateCheck` | Pass | Should be PREPARE_FOR_SUBMISSION |
 | `buildCheck` | Fail if not uploaded yet | Upload and link a build (Phase 4) |
-| `pricingCheck` | Fail | Set pricing in App Store Connect web UI |
+| `pricingCheck` | Fail | `asc apps prices set` (Step 3.2) |
 | `reviewContactCheck` | Fail | `asc version-review-detail update` (Step 3.3) |
 | `localizationCheck` | Fail if screenshots missing | Upload screenshots |
 | `screenshotSetCount: 0` | Fail | Need at least one screenshot set per device |
@@ -312,10 +314,14 @@ For macOS: `APP_DESKTOP`
 
 Once `isReadyToSubmit` is true:
 
+A new app's in-app purchases and subscriptions are first-time products, so they must go to review with this version. Preview, confirm with the user, then submit:
+
 ```bash
-# Use the affordance from check-readiness output
-asc versions submit --version-id <VERSION_ID>
+asc versions submit --version-id <VERSION_ID> --with-products --dry-run --output table
+asc versions submit --version-id <VERSION_ID> --with-products
 ```
+
+Check the dry run lists every product the user expects — ones still `MISSING_METADATA` are left out. If Apple refuses, the error lists each reason (missing device screenshots, content rights, App Privacy answers, pricing); see [submit-with-products.md](../shared/submit-with-products.md).
 
 Tell the user: "Your app has been submitted for review! Apple typically reviews within 24-48 hours. You'll receive an email when it's approved (or if there are issues to address)."
 
@@ -345,6 +351,12 @@ asc app-infos update --app-info-id $APP_INFO_ID --primary-category EDUCATION
 asc version-localizations update --localization-id $LOC_ID \
   --description "..." --keywords "..." --support-url "..." --marketing-url "..."
 
+# 5b. Price (free), availability, content rights — App Privacy is published in the web UI
+FREE=$(asc apps price-points list --app-id $APP_ID | jq -r '.data[] | select(.customerPrice == "0.0") | .id')
+asc apps prices set --app-id $APP_ID --base-territory USA --price-point-id "$FREE"
+asc app-availability create --app-id $APP_ID --all-territories --available-in-new-territories
+asc apps update --app-id $APP_ID --content-rights-declaration DOES_NOT_USE_THIRD_PARTY_CONTENT
+
 # 6. Review contact
 asc version-review-detail update --version-id $VERSION_ID \
   --contact-email "dev@me.com" --contact-phone "+1-555-0100"
@@ -360,6 +372,7 @@ asc versions set-build --version-id $VERSION_ID --build-id $BUILD_ID
 # 9. Check readiness
 asc versions check-readiness --version-id $VERSION_ID
 
-# 10. Submit
-asc versions submit --version-id $VERSION_ID
+# 10. Submit, with any in-app purchases and subscriptions (first-time products)
+asc versions submit --version-id $VERSION_ID --with-products --dry-run
+asc versions submit --version-id $VERSION_ID --with-products
 ```

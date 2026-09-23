@@ -3,8 +3,8 @@ name: asc-iap
 description: |
   Manage In-App Purchases with the `asc` CLI: list/create/update/delete/submit/unsubmit IAPs, manage
   localizations and pricing, handle IAP offer codes, and upload or remove review screenshots and 1024x1024
-  promotional images. Trigger on requests to create or submit IAPs, manage redemption codes, change pricing,
-  edit review assets, or maintain IAP metadata.
+  promotional images. Trigger on requests to create or submit IAPs (including a first IAP, which must go to
+  review with an app version), manage redemption codes, change pricing, edit review assets, or maintain IAP metadata.
 ---
 
 # asc In-App Purchases
@@ -51,7 +51,10 @@ asc iap delete --iap-id <ID>
 ```bash
 asc iap submit --iap-id <ID>          # state must be READY_TO_SUBMIT (affordance gates this)
 asc iap unsubmit --submission-id <ID> # withdraw from review; manual Request<Void>
+asc iap versions list --iap-id <ID>   # review versions + state; submittable ones offer addToSubmission
 ```
+
+**First-time IAP?** Apple only reviews it together with an app version, so `asc iap submit` fails for it. Submit it with the app: `asc versions submit --version-id <VERSION_ID> --with-products` (run with `--dry-run` first). See [submit-with-products.md](../shared/submit-with-products.md) for the full workflow.
 
 ## IAP Pricing
 
@@ -163,6 +166,7 @@ Every IAP response embeds ready-to-run follow-up commands:
     "listLocalizations":   "asc iap-localizations list --iap-id <ID>",
     "listOfferCodes":      "asc iap-offer-codes list --iap-id <ID>",
     "listPricePoints":     "asc iap price-points list --iap-id <ID>",
+    "listVersions":        "asc iap versions list --iap-id <ID>",
     "submit":              "asc iap submit --iap-id <ID>",
     "update":              "asc iap update --iap-id <ID> --reference-name <name>"
   }

@@ -127,6 +127,7 @@ asc diagnostic-logs list --signature-id "$SIG_ID" --pretty
 | Battery | `BATTERY` | Energy impact |
 | Termination | `TERMINATION` | Background/foreground terminations |
 | Animation | `ANIMATION` | Animation hitch rate |
+| Storage | `STORAGE` | Storage use |
 
 ## Diagnostic Types
 
