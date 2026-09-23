@@ -24,7 +24,7 @@ Xcode project
   → asc builds update-beta-notes       # optional: "What's New" text
   → asc versions set-build             # link build to App Store version
   → asc versions check-readiness       # gate: verify all checks pass
-  → asc versions submit                # submit for App Store review
+  → asc versions submit                # submit for App Store review (--with-products for new IAPs/subscriptions)
 ```
 
 **Option B: Upload pre-built IPA** — you already have a signed binary (from Xcode, Fastlane, etc.)
@@ -36,7 +36,7 @@ Signed IPA/PKG (from your build step)
   → asc builds update-beta-notes       # optional: "What's New" text
   → asc versions set-build             # link build to App Store version
   → asc versions check-readiness       # gate: verify all checks pass
-  → asc versions submit                # submit for App Store review
+  → asc versions submit                # submit for App Store review (--with-products for new IAPs/subscriptions)
 ```
 
 See [workflow-template.md](references/workflow-template.md) for complete copy-paste workflows.
@@ -167,9 +167,13 @@ if [ "$IS_READY" != "true" ]; then
   exit 1
 fi
 
-# 8. App Store: submit for review
-asc versions submit --version-id $VERSION_ID
+# 8. App Store: submit for review. --with-products also sends every READY_TO_SUBMIT
+#    in-app purchase and subscription in the same submission — required for first-time
+#    products, harmless otherwise. Preview with --dry-run.
+asc versions submit --version-id $VERSION_ID --with-products
 ```
+
+First-time IAPs and subscriptions must be reviewed with an app version; see [submit-with-products.md](../shared/submit-with-products.md) for the dry run, step-by-step control, and reading Apple's refusal reasons.
 
 ## Finding Your IDs
 

@@ -110,9 +110,20 @@ Report the result to the user. If `isReadyToSubmit` is true, ask if they want to
 
 ### Step 9: Submit (if user confirms)
 
+If the app has in-app purchases or subscriptions that have never been approved, they must go to review with this version. Show the user what would be included, then submit with them:
+
+```bash
+asc versions submit --version-id <VERSION_ID> --with-products --dry-run --output table
+asc versions submit --version-id <VERSION_ID> --with-products
+```
+
+Otherwise:
+
 ```bash
 asc versions submit --version-id <VERSION_ID>
 ```
+
+If Apple refuses, the error lists what to fix — see [submit-with-products.md](../shared/submit-with-products.md).
 
 ## First-time platform setup (one-time only)
 

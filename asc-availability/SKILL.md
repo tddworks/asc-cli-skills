@@ -2,7 +2,7 @@
 name: asc-availability
 description: |
   Manage app, IAP, and subscription territory availability with the `asc` CLI.
-  Use this for `asc territories list`, `asc app-availability get`, `asc iap-availability get|create`,
+  Use this for `asc territories list`, `asc app-availability get|create`, `asc iap-availability get|create`,
   and `asc subscription-availability get|create`. Trigger on requests about app/IAP/subscription
   availability, which countries or markets are enabled, blocked territory/content status, pre-order
   territory status, enabling new territories, or restricting sales to specific regions.
@@ -19,6 +19,15 @@ The richest availability view — shows every territory with `isAvailable` (true
 ```bash
 asc app-availability get --app-id <APP_ID> [--pretty]
 ```
+
+If the app's availability was never set up (App Store Connect shows **Set Up Availability**), this returns `{"data":[]}` and prints a hint. Set it up:
+
+```bash
+asc app-availability create --app-id <APP_ID> --all-territories --available-in-new-territories
+asc app-availability create --app-id <APP_ID> --territory USA --territory JPN [--available-in-new-territories]
+```
+
+Pass either `--territory` (repeatable) or `--all-territories` (every territory from `asc territories list`). REST: `POST /api/v1/apps/:appId/availability` with `{"territory": [...]}` or `{"all-territories": true}`. An unreleased app shows `CANNOT_SELL` + `AVAILABLE_FOR_SALE_UNRELEASED_APP` in every territory — expected until release.
 
 This returns all ~175 territories with their status. Key `contentStatuses` values:
 - `AVAILABLE` — selling normally

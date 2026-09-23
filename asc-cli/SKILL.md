@@ -40,10 +40,12 @@ asc <command> <subcommand> --help # detailed usage for a specific action
 
 Examples:
 ```bash
-asc versions --help               # see: list, create, submit, set-build, check-readiness
+asc versions --help               # see: list, create, submit (--with-products, --dry-run), set-build, check-readiness
+asc apps --help                   # see: list, update (content rights), price-points, prices
 asc builds --help                 # see: list, upload, archive, add-beta-group, ...
 asc testflight --help             # see: groups, testers
-asc iap --help                    # see: list, create, submit, price-points, prices
+asc iap --help                    # see: list, create, submit, price-points, prices, versions
+asc review-submissions --help     # see: list, get, create, submit, items (list, add, remove)
 ```
 
 ## Follow the Affordances

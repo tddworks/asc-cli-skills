@@ -13,7 +13,7 @@ asc perf-metrics list --build-id <BUILD_ID> [--metric-type <TYPE>] [--pretty] [-
 |------|------|---------|-------------|
 | `--app-id` | String | *(one required)* | App ID — get app-level aggregated metrics |
 | `--build-id` | String | *(one required)* | Build ID — get build-specific metrics |
-| `--metric-type` | String | *(optional)* | Filter: `HANG`, `LAUNCH`, `MEMORY`, `DISK`, `BATTERY`, `TERMINATION`, `ANIMATION` |
+| `--metric-type` | String | *(optional)* | Filter: `HANG`, `LAUNCH`, `MEMORY`, `DISK`, `BATTERY`, `TERMINATION`, `ANIMATION`, `STORAGE` |
 | `--output` | String | `json` | `json` \| `table` \| `markdown` |
 | `--pretty` | Bool | `false` | Pretty-print JSON |
 
@@ -112,7 +112,7 @@ asc diagnostic-logs list --signature-id sig-1 --pretty
 | `parentId` | String | App ID or Build ID (injected by infrastructure) |
 | `parentType` | String | `"app"` or `"build"` |
 | `platform` | String? | e.g. `"IOS"` |
-| `category` | String | `HANG`, `LAUNCH`, `MEMORY`, `DISK`, `BATTERY`, `TERMINATION`, `ANIMATION` |
+| `category` | String | `HANG`, `LAUNCH`, `MEMORY`, `DISK`, `BATTERY`, `TERMINATION`, `ANIMATION`, `STORAGE` |
 | `metricIdentifier` | String | e.g. `"launchTime"`, `"peakMemory"` |
 | `unit` | String? | e.g. `"s"`, `"MB"` |
 | `latestValue` | Double? | Most recent data point |

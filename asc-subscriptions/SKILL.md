@@ -4,7 +4,8 @@ description: |
   Manage auto-renewable subscriptions with the `asc` CLI: subscription groups, group localizations,
   subscriptions, pricing, subscription localizations, introductory offers, promotional offers, win-back
   offers, offer codes, and subscription review screenshots. Trigger on requests about subscription tiers,
-  free trials, promo or custom codes, lapsed-subscriber win-back offers, Custom App Name, or review assets.
+  free trials, promo or custom codes, lapsed-subscriber win-back offers, Custom App Name, review assets, or
+  submitting a first subscription (it must go to review with an app version).
 ---
 
 # asc Subscriptions
@@ -41,7 +42,11 @@ asc subscriptions update --subscription-id <SUB_ID> \
 asc subscriptions delete --subscription-id <SUB_ID>
 asc subscriptions submit   --subscription-id <SUB_ID>          # state must be READY_TO_SUBMIT
 asc subscriptions unsubmit --submission-id <SUBMISSION_ID>     # withdraw from review (manual Request<Void>)
+asc subscriptions versions list --subscription-id <SUB_ID>     # review versions + state (addToSubmission when submittable)
+asc subscription-groups versions list --group-id <GROUP_ID>    # a group's first subscription needs the group version too
 ```
+
+**First-time subscription?** Apple only reviews it together with an app version (and its group's version), so `asc subscriptions submit` fails for it. Submit it with the app: `asc versions submit --version-id <VERSION_ID> --with-products` (run with `--dry-run` first). See [submit-with-products.md](../shared/submit-with-products.md).
 
 `--period` ∈ `ONE_WEEK`, `ONE_MONTH`, `TWO_MONTHS`, `THREE_MONTHS`, `SIX_MONTHS`, `ONE_YEAR`.
 
@@ -216,6 +221,7 @@ Upload uses ASC's reserve → upload chunks → commit-with-MD5 protocol.
   "delete":                 "asc subscriptions delete --subscription-id <ID>",
   "getReviewScreenshot":    "asc subscription-review-screenshot get --subscription-id <ID>",
   "listPromotionalOffers":  "asc subscription-promotional-offers list --subscription-id <ID>",
+  "listVersions":           "asc subscriptions versions list --subscription-id <ID>",
   "listWinBackOffers":      "asc win-back-offers list --subscription-id <ID>",
   "update":                 "asc subscriptions update --subscription-id <ID> --name <name>"
 }
@@ -248,7 +254,8 @@ USA_PP=$(asc subscriptions price-points list --subscription-id "$SUB_ID" --terri
   | jq -r '.data[] | select(.customerPrice == "9.99") | .id')
 asc subscriptions prices set --subscription-id "$SUB_ID" --territory USA --price-point-id "$USA_PP"
 
-# 3. Review screenshot + submit
+# 3. Review screenshot + submit (first-time subscription: with the app version instead,
+#    `asc versions submit --version-id "$VERSION_ID" --with-products`)
 asc subscription-review-screenshot upload --subscription-id "$SUB_ID" --file ./review.png
 asc subscriptions submit --subscription-id "$SUB_ID"
 

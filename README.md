@@ -72,7 +72,7 @@ asc-code-signing/
     └── commands.md     # Detailed command reference
 ```
 
-The `shared/` directory contains cross-skill resources like project context resolution.
+The `shared/` directory contains cross-skill resources: project context resolution, and submitting first-time in-app purchases and subscriptions together with an app version (`shared/submit-with-products.md`).
 
 ## Update
 
