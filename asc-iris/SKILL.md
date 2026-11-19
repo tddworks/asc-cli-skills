@@ -1,15 +1,13 @@
 ---
 name: asc-iris
 description: |
-  Manage App Store Connect private API (iris) with cookie-based authentication using the `asc` CLI tool.
+  Use App Store Connect's private API (iris) with Apple ID cookie auth through the `asc` CLI, for what the public API can't do.
   Use this skill when:
-  (1) Checking iris session status: "asc iris status", "am I logged in to iris", "check iris cookies"
-  (2) Listing apps via iris private API: "asc iris apps list", "list my apps with iris"
-  (3) Creating a new app: "asc iris apps create --name NAME --bundle-id ID --sku SKU", "create app", "register new app", "add app to App Store Connect"
-  (4) User mentions "iris", "private API", "cookie-based auth", "create app", "register app", "new app on App Store Connect"
-  (5) User wants to do something that the public API cannot do (e.g. app creation)
-  (6) Troubleshooting iris cookie errors or "No App Store Connect cookies found" messages
-  (7) Reading App Review rejection messages: "asc iris resolution-center get --submission-id ID", "why was my app rejected", "resolution center", "rejection reason", "App Review message"
+  (1) Checking the iris session or cookie errors: "asc iris status", "am I logged in to iris", "No App Store Connect cookies found"
+  (2) Listing or creating apps: "asc iris apps list", "asc iris apps create --name NAME --bundle-id ID --sku SKU", "create app", "register new app"
+  (3) Reading App Review rejection messages: "asc iris resolution-center get --submission-id ID", "why was my app rejected", "resolution center"
+  (4) Answering App Compliance (China mainland Security Assessment, AI generated content): "asc iris app-compliance list|declare", "Missing Info", "AIGC filing"
+  (5) User mentions "iris", "private API", "cookie-based auth", or something the public API can't do
 ---
 
 # asc iris — App Store Connect Private API
@@ -124,7 +122,7 @@ asc iris apps create \
   --pretty
 ```
 
-**Important:** The `--bundle-id` must reference an already-registered bundle identifier. Register one first with `asc bundle-ids register` if needed.
+**Important:** The `--bundle-id` must reference an already-registered bundle identifier. Register one first with `asc bundle-ids create --name NAME --identifier ID --platform ios` if needed.
 
 ### resolution-center get — read App Review's rejection message
 
@@ -140,7 +138,34 @@ asc iris resolution-center get --submission-id <SUBMISSION_ID> --out ./rc-attach
 Returns the Resolution Center thread: `messages[]` (reviewer text, `fromActor`
 APPLE/USER), `rejectionReasons[]` (guideline `section`/`code`/description),
 and `attachments[]` when App Review attached files (`--out <dir>` downloads them).
-Full docs: [docs/features/resolution-center.md](../../docs/features/resolution-center.md)
+Full docs: [docs/features/resolution-center/README.md](../../docs/features/resolution-center/README.md)
+
+### app-compliance — the App Compliance page (China mainland)
+
+Every app gets two requirements, Security Assessment and AI Generated or Synthetic
+Content, each starting as `MISSING_INFO`. The list is the page's table; each row says
+whether it can be declared (`declare` affordance: Missing Info, Active, Verification
+Failed — never while `PENDING_VERIFICATION`).
+
+```bash
+asc iris app-compliance list --app-id <APP_ID> --output table
+
+# No: the app doesn't offer the feature in China mainland (or it's disabled/geoblocked there)
+asc iris app-compliance declare --app-id <APP_ID> --requirement-id <ID> --answer no
+
+# Yes, Security Assessment: two files (.doc .docx .jpeg .jpg .pdf .png)
+asc iris app-compliance declare --app-id <APP_ID> --requirement-id <ID> --answer yes --proof ./proof.pdf --report ./report.pdf
+
+# Yes, AIGC: the filing, plus the agreement only when third-party technology powers it
+asc iris app-compliance declare --app-id <APP_ID> --requirement-id <ID> --answer yes \
+  --filing-type llm|algorithm --filing-name "<name>" --filing-number "<number>" [--third-party-authorization ./agreement.pdf]
+```
+
+A Yes goes to `PENDING_VERIFICATION` (`requiredActions: APP_BINARY_SUBMISSION`: Apple
+checks it at the next submission) and is read-only until then. Only send real evidence:
+Apple verifies the files and filing numbers. Missing evidence, a disallowed file type or a
+pending row is refused before anything is sent.
+Full docs: [docs/features/app-compliance/README.md](../../docs/features/app-compliance/README.md)
 
 ## Typical Workflow
 
