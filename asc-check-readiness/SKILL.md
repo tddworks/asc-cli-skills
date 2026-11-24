@@ -42,7 +42,7 @@ Runs 6 API checks and returns a `VersionReadiness` report.
 | `reviewContactCheck` | SHOULD FIX | No — warning only, submission still proceeds |
 | `localizations[].pass` | SHOULD FIX | No — Apple may reject post-submit |
 
-**Readiness is a pre-check, not Apple's verdict.** Apple runs more checks when the version is added to a submission — every required device screenshot size (e.g. iPad 12.9"), the content rights declaration, published App Privacy answers — which `check-readiness` doesn't see. So `isReadyToSubmit: true` can still be refused at submit time. When that happens, `asc versions submit` / `asc review-submissions items add` print Apple's reasons one per line (`Apple refused the review submission: … - <reason>`); relay each as something to fix. See [submit-with-products.md](../shared/submit-with-products.md).
+**Readiness is a pre-check, not Apple's verdict.** Apple runs more checks when the version is added to a submission — every required device screenshot size (e.g. iPad 12.9"), the content rights declaration, published App Privacy answers (check with `asc iris app-privacy get`: `blocksSubmission`) — which `check-readiness` doesn't see. So `isReadyToSubmit: true` can still be refused at submit time. When that happens, `asc versions submit` / `asc review-submissions items add` print Apple's reasons one per line (`Apple refused the review submission: … - <reason>`); relay each as something to fix. See [submit-with-products.md](../shared/submit-with-products.md).
 
 ### Build check fields
 

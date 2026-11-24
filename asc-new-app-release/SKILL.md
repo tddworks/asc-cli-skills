@@ -204,11 +204,20 @@ Ask the user for their contact email and phone number. This is required for App 
 
 ### Step 3.4: Privacy Nutrition Labels
 
-App Privacy answers have **no public App Store Connect API** — they can only be published in the App Store Connect web page (or through a web session). Until they're published, the submission is refused with "You must have published answers to your app's data usages."
+App Privacy answers have **no public App Store Connect API**; `asc iris app-privacy` sets them through the web session (see [asc-iris](../asc-iris/SKILL.md)). Until they're published, the submission is refused with "You must have published answers to your app's data usages."
 
-If the app collects no user data, tell the user: App Store Connect > App > App Privacy > Get Started > "No, we don't collect data from this app" > Publish.
+```bash
+asc iris app-privacy get --app-id $APP_ID          # blocksSubmission: true until published
+```
 
-If the app does collect data, walk through each data type. See the [Apple privacy documentation](https://developer.apple.com/app-store/app-privacy-details/) for categories.
+If the app collects no user data (confirm with the user):
+
+```bash
+asc iris app-privacy declare --app-id $APP_ID --not-collected
+asc iris app-privacy publish --app-id $APP_ID
+```
+
+If the app does collect data, walk through each data type with the user, write them to a `privacy.json` (`{"collectedData": [...]}`), then `declare --file privacy.json` and `publish`. See the [Apple privacy documentation](https://developer.apple.com/app-store/app-privacy-details/) for what each category means.
 
 ---
 
@@ -351,11 +360,13 @@ asc app-infos update --app-info-id $APP_INFO_ID --primary-category EDUCATION
 asc version-localizations update --localization-id $LOC_ID \
   --description "..." --keywords "..." --support-url "..." --marketing-url "..."
 
-# 5b. Price (free), availability, content rights — App Privacy is published in the web UI
+# 5b. Price (free), availability, content rights, App Privacy
 FREE=$(asc apps price-points list --app-id $APP_ID | jq -r '.data[] | select(.customerPrice == "0.0") | .id')
 asc apps prices set --app-id $APP_ID --base-territory USA --price-point-id "$FREE"
 asc app-availability create --app-id $APP_ID --all-territories --available-in-new-territories
 asc apps update --app-id $APP_ID --content-rights-declaration DOES_NOT_USE_THIRD_PARTY_CONTENT
+asc iris app-privacy declare --app-id $APP_ID --not-collected   # only if the user confirms it collects nothing
+asc iris app-privacy publish --app-id $APP_ID
 
 # 6. Review contact
 asc version-review-detail update --version-id $VERSION_ID \

@@ -7,7 +7,8 @@ description: |
   (2) Listing or creating apps: "asc iris apps list", "asc iris apps create --name NAME --bundle-id ID --sku SKU", "create app", "register new app"
   (3) Reading App Review rejection messages: "asc iris resolution-center get --submission-id ID", "why was my app rejected", "resolution center"
   (4) Answering App Compliance (China mainland Security Assessment, AI generated content): "asc iris app-compliance list|declare", "Missing Info", "AIGC filing"
-  (5) User mentions "iris", "private API", "cookie-based auth", or something the public API can't do
+  (5) App Privacy label: "asc iris app-privacy get|declare|publish", "privacy nutrition label", "You must have published answers to your app's data usages"
+  (6) User mentions "iris", "private API", "cookie-based auth", or something the public API can't do
 ---
 
 # asc iris — App Store Connect Private API
@@ -166,6 +167,32 @@ checks it at the next submission) and is read-only until then. Only send real ev
 Apple verifies the files and filing numbers. Missing evidence, a disallowed file type or a
 pending row is refused before anything is sent.
 Full docs: [docs/features/app-compliance/README.md](../../docs/features/app-compliance/README.md)
+
+### app-privacy — the App Privacy label ("nutrition label")
+
+App Review refuses a submission until the label is published ("You must have published
+answers to your app's data usages"), and there is no public API for it. `get` shows
+`dataCollection` (`NOT_ANSWERED` / `NOT_COLLECTED` / `COLLECTED`) and `blocksSubmission`.
+
+```bash
+asc iris app-privacy get --app-id <APP_ID> --pretty
+
+# The app collects nothing
+asc iris app-privacy declare --app-id <APP_ID> --not-collected
+
+# Or the data it collects, in the shape `get` shows it
+asc iris app-privacy declare --app-id <APP_ID> --file privacy.json
+#   {"collectedData": [{"category": "EMAIL_ADDRESS", "purposes": ["APP_FUNCTIONALITY"],
+#                       "isLinkedToYou": true, "isUsedToTrackYou": false}]}
+
+# Declaring is a draft: publish it
+asc iris app-privacy publish --app-id <APP_ID>
+```
+
+`declare` replaces the whole label. Ask the user what the app collects (or read its code
+for analytics SDKs, accounts, location) — it's a legal declaration. An unknown category or
+purpose is refused before anything is sent. Categories, purposes and REST:
+[docs/features/app-privacy/README.md](../../docs/features/app-privacy/README.md)
 
 ## Typical Workflow
 
