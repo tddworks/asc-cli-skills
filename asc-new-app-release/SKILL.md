@@ -162,16 +162,28 @@ asc app-info-localizations update \
 
 ### Step 3.1: Age Rating
 
-The default age rating (NONE = 4+) is usually correct for utility/productivity apps. Verify:
+A new app has no saved questionnaire (App Store Connect shows "Set Up Age Ratings"). Apple refuses the first `update` unless it answers **every** question at once, naming each missing one in a 409 `ENTITY_ERROR.ATTRIBUTE.REQUIRED`. The answers are a declaration about the app's content: ask the user, or copy them from a sibling app they point to (`asc age-rating get` on that app).
+
 ```bash
-asc age-rating get --app-info-id <APP_INFO_ID>
+APP_INFO_ID=$(asc app-infos list --app-id <APP_ID> | jq -r '.data[0].id')
+asc age-rating get --app-info-id "$APP_INFO_ID"   # its "id" is the declaration ID
+
+# First save — an app with none of this content (4+):
+asc age-rating update --declaration-id <DECLARATION_ID> \
+  --advertising false --age-assurance false --dating-and-relationships false --gambling false \
+  --health-or-wellness-topics false --loot-box false --messaging-and-chat false --parental-controls false \
+  --shared-location false --social-media false --unrestricted-web-access false --user-generated-content false \
+  --alcohol-tobacco-drugs NONE --contests NONE --gambling-simulated NONE --guns-weapons NONE \
+  --horror-fear NONE --mature-suggestive NONE --medical-treatment NONE --profanity NONE \
+  --sexual-content-graphic NONE --sexual-content NONE --violence-cartoon NONE --violence-realistic NONE \
+  --violence-realistic-prolonged NONE
 ```
 
-If the app has mature content, update it:
-```bash
-asc age-rating update --declaration-id <APP_INFO_ID> \
-  --age-rating-override SEVENTEEN_PLUS
-```
+- Booleans take `true`/`false`; intensities take `NONE`, `INFREQUENT_OR_MILD`, `FREQUENT_OR_INTENSE`.
+- `--social-media true` also needs `--social-media-age-restricted <bool>`.
+- After the first save, `update` is a partial PATCH: pass only what changes.
+- To force a rating: `--age-rating-override NINE_PLUS|THIRTEEN_PLUS|SIXTEEN_PLUS|EIGHTEEN_PLUS|UNRATED`.
+- `asc versions check-readiness` reports any question still unanswered.
 
 ### Step 3.2: Pricing, availability and content rights
 
